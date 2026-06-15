@@ -13,6 +13,10 @@ class AnalyticsController extends Controller
             abort(403, 'No active community selected.');
         }
 
+        if (!auth()->user()->hasRole('Super Admin') && !auth()->user()->hasCommunityRole($activeCommunityId, 'Owner')) {
+            abort(403, 'Only Community Owners and Super Admins can access analytics.');
+        }
+
         // Base query for events in the active community
         $communityEventsQuery = \App\Models\Event::where('community_id', $activeCommunityId);
 
@@ -89,14 +93,66 @@ class AnalyticsController extends Controller
 
     public function export(Request $request)
     {
-        $validated = $request->validate([
-            'format' => 'required|in:pdf,csv,excel',
-            'data_points' => 'required|array',
-        ]);
+        $activeCommunityId = session('active_community_id');
+        if (!$activeCommunityId) {
+            abort(403, 'No active community selected.');
+        }
 
-        // Logic to generate and download analytics report based on selected options
-        // return Excel::download(new AnalyticsExport($validated), 'analytics.' . $validated['format']);
+        if (!auth()->user()->hasRole('Super Admin') && !auth()->user()->hasCommunityRole($activeCommunityId, 'Owner')) {
+            abort(403, 'Only Community Owners and Super Admins can access analytics.');
+        }
 
-        return back()->with('success', 'Report export started.');
+        $format = $request->input('format', 'csv');
+        $community = \App\Models\Community::find($activeCommunityId);
+        $events = \App\Models\Event::where('community_id', $activeCommunityId)
+            ->withCount('participants')
+            ->withCount(['participants as attended_count' => function ($query) {
+                $query->where('status', 'Attended');
+            }])
+            ->get();
+
+        $data = [];
+        foreach ($events as $event) {
+            $attendanceRate = $event->participants_count > 0 ? round(($event->attended_count / $event->participants_count) * 100) : 0;
+            $data[] = [
+                'Event Title' => $event->title,
+                'Start Date' => \Carbon\Carbon::parse($event->start_date)->format('Y-m-d H:i'),
+                'Total Participants' => $event->participants_count,
+                'Attended' => $event->attended_count,
+                'Attendance Rate (%)' => $attendanceRate,
+                'Status' => $event->status
+            ];
+        }
+
+        $filename = 'analytics_report_' . date('Y-m-d');
+
+        if ($format === 'pdf') {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('Pages.AnalyticsExportPdf', compact('data', 'community'));
+            return $pdf->download($filename . '.pdf');
+        } else {
+            // Both CSV and Excel will use CSV format since we can't install PhpSpreadsheet due to missing extensions
+            $headers = [
+                "Content-type"        => "text/csv",
+                "Content-Disposition" => "attachment; filename=$filename.csv",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ];
+
+            $callback = function() use($data) {
+                $file = fopen('php://output', 'w');
+                if (count($data) > 0) {
+                    fputcsv($file, array_keys($data[0]));
+                    foreach ($data as $row) {
+                        fputcsv($file, $row);
+                    }
+                } else {
+                    fputcsv($file, ['No data available']);
+                }
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
     }
 }

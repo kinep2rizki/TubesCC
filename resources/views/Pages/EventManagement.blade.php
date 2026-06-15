@@ -11,26 +11,36 @@
             <p class="font-body-base text-body-base text-on-surface-variant mt-xs">Manage upcoming tech events and hackathons.</p>
         </div>
         
-        <div class="flex flex-col sm:flex-row gap-sm items-start sm:items-center">
-            <!-- Mobile Search (if hidden on desktop nav) -->
-            <div class="md:hidden relative w-full sm:w-auto flex-1">
-                <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
-                <input class="w-full bg-surface-container rounded-lg py-2 pl-xl pr-sm text-body-sm font-body-sm text-on-surface border border-outline-variant/30 focus:border-primary focus:outline-none" placeholder="Search..." type="text"/>
+        <form action="{{ route('events') }}" method="GET" class="flex flex-col sm:flex-row gap-sm items-start sm:items-center w-full md:w-auto" x-data="{
+            submitForm() {
+                this.$el.submit();
+            }
+        }">
+            <!-- Search -->
+            <div class="relative w-full sm:w-auto flex-1">
+                <span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+                <input name="search" value="{{ request('search') }}" @keydown.enter.prevent="submitForm()" class="w-full bg-surface-container rounded-lg py-2 pl-xl pr-sm text-body-sm font-body-sm text-on-surface border border-outline-variant/30 focus:border-primary focus:outline-none" placeholder="Search events..." type="text"/>
             </div>
             
-            <button class="flex items-center gap-xs px-md py-2 rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-variant transition-colors font-label-caps text-label-caps w-full sm:w-auto justify-center">
-                <span class="material-symbols-outlined text-[18px]">filter_list</span>
-                Filter
-            </button>
+            <!-- Filter by Status -->
+            <div class="relative w-full sm:w-auto">
+                <select name="status" @change="submitForm()" class="w-full appearance-none bg-surface-container rounded-lg py-2 pl-md pr-xl text-body-sm font-body-sm text-on-surface border border-outline-variant/30 focus:border-primary focus:outline-none cursor-pointer">
+                    <option value="All" {{ request('status') == 'All' ? 'selected' : '' }}>All Status</option>
+                    <option value="Upcoming" {{ request('status') == 'Upcoming' ? 'selected' : '' }}>Upcoming</option>
+                    <option value="Live Now" {{ request('status') == 'Live Now' ? 'selected' : '' }}>Live Now</option>
+                    <option value="Finished" {{ request('status') == 'Finished' ? 'selected' : '' }}>Finished</option>
+                </select>
+                <span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">arrow_drop_down</span>
+            </div>
             
             <!-- Primary Blue Button -->
             @if(auth()->user() && auth()->user()->canManageEvent(session('active_community_id')))
-            <button @click="showCreateEventModal = true" class="flex items-center gap-xs px-md py-2 rounded-lg bg-gradient-to-r from-primary-container to-blue-600 text-white font-label-caps text-label-caps w-full sm:w-auto justify-center shadow-[0_0_15px_rgba(77,142,255,0.3)] hover:shadow-[0_0_20px_rgba(77,142,255,0.5)] transition-shadow">
+            <button type="button" @click="showCreateEventModal = true" class="flex items-center gap-xs px-md py-2 rounded-lg bg-gradient-to-r from-primary-container to-blue-600 text-white font-label-caps text-label-caps w-full sm:w-auto justify-center shadow-[0_0_15px_rgba(77,142,255,0.3)] hover:shadow-[0_0_20px_rgba(77,142,255,0.5)] transition-shadow">
                 <span class="material-symbols-outlined text-[18px]">add</span>
                 Create Event
             </button>
             @endif
-        </div>
+        </form>
     </div>
 
     <!-- Events Grid (Bento/Card Layout) -->
@@ -44,7 +54,7 @@
             participantsCount="{{ $event->participants_count }} Participants"
             avatarsLabel="+{{ max(0, $event->participants_count - 3) }}"
             progressLabel="Attendance Target"
-            progressValue="85%"
+            progressValue="{{ $event->attendance_rate }}%"
             imageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuCCJzpsovxejyPZao4ZlZ6jp2V_ooh-F6tRVEq_s-y7ZfXOewlRmauNdg_e0b9T9CF3KapW1we9FZoNHCKfC9vLvTGpzA9UPyOV3oCtOWrfIusmzJBMfWI5I10f_Lmbr4qx0dYKDBnWnm7uVkbQoZYOJq_fGIQ-j6Y-9qXGq_wa4ErxsJ2yAdiVMLvON3KnJB2d59B9cG_puGMXs6ozBSsoZOHtjSC6c9M8173lkkl8q0PnoLpTW0AWi7SirXWAzIdDp0bPFIpOkoN0"
             hasProgressGradient="true"
             link="{{ route('event-detail', $event->id) }}"

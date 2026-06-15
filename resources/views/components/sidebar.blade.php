@@ -67,17 +67,25 @@
         </a>
         @endif
 
-        @role('Super Admin')
+        @php
+            $isSuperOrOwner = false;
+            if (auth()->check()) {
+                $activeCommunityId = session('active_community_id');
+                $isSuperOrOwner = auth()->user()->hasRole('Super Admin') || ($activeCommunityId && auth()->user()->hasCommunityRole($activeCommunityId, 'Owner'));
+            }
+        @endphp
+
+        @if($isSuperOrOwner)
         <a class="flex items-center gap-md {{ request()->routeIs('analytics') ? $activeClass : $inactiveClass }}" href="{{ route('analytics') }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('analytics') ? '1' : '0' }};">analytics</span>
             <span class="font-label-caps text-label-caps">Analytics</span>
         </a>
+        @endif
 
         <a class="flex items-center gap-md {{ request()->routeIs('settings') ? $activeClass : $inactiveClass }}" href="{{ route('settings') }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('settings') ? '1' : '0' }};">settings</span>
             <span class="font-label-caps text-label-caps">Settings</span>
         </a>
-        @endrole
     </div>
     <!-- Footer Tabs -->
     <div class="border-t border-outline-variant/30 pt-sm mt-sm flex flex-col gap-xs">

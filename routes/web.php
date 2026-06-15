@@ -55,6 +55,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/events/{eventId}/certificates', [CertificateController::class, 'index'])->name('certificates');
     
     // Analytics
+    Route::get('/analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
     
     // Platform Settings (Profile)

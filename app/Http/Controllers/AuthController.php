@@ -67,7 +67,7 @@ class AuthController extends Controller
             'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
         ]);
         
-        $user->assignRole('Event Staff'); // Default role for new users
+        // $user->assignRole('Event Staff'); // Removed to avoid RoleDoesNotExist exception
 
         if ($communityToJoin) {
             $communityToJoin->members()->create([

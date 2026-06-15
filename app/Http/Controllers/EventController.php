@@ -95,33 +95,59 @@ class EventController extends Controller
         ));
     }
 
-    public function manage()
+    public function manage(\Illuminate\Http\Request $request)
     {
         $activeCommunityId = session('active_community_id');
-        $eventsList = \App\Models\Event::where('community_id', $activeCommunityId)
-                        ->with('community')->withCount('participants')->get();
+        
+        $query = \App\Models\Event::where('community_id', $activeCommunityId)
+                        ->with('community')
+                        ->withCount('participants')
+                        ->withCount(['participants as attended_count' => function ($query) {
+                            $query->where('status', 'Attended');
+                        }]);
+
+        // Filter by Search Query
+        if ($request->filled('search')) {
+            $query->where('title', 'ilike', '%' . $request->search . '%');
+        }
+
+        // Filter by Status
+        if ($request->filled('status') && $request->status !== 'All') {
+            $query->where('status', $request->status);
+        }
+
+        $eventsList = $query->orderBy('start_date', 'desc')->get();
+
+        // Calculate attendance rate for each event
+        foreach ($eventsList as $event) {
+            $event->attendance_rate = $event->participants_count > 0 
+                ? round(($event->attended_count / $event->participants_count) * 100) 
+                : 0;
+        }
+
         return view('Pages.EventManagement', compact('eventsList'));
     }
 
     public function show($id)
     {
-        $event = \App\Models\Event::with('participants.user')->findOrFail($id);
+        $event = \App\Models\Event::findOrFail($id);
         
         $activeCommunityId = session('active_community_id');
         if ($event->community_id != $activeCommunityId) {
             return redirect()->route('events')->with('error', 'The event belongs to a different community.');
         }
         
-        $registeredCount = $event->participants->where('status', 'Registered')->count();
-        $attendedCount = $event->participants->where('status', 'Attended')->count();
-        $waitlistedCount = $event->participants->where('status', 'Waitlisted')->count();
-        $notAttendingCount = $event->participants->where('status', 'Not Attending')->count();
+        // Use database queries instead of loading all participants into memory
+        $registeredCount = $event->participants()->where('status', 'Registered')->count();
+        $attendedCount = $event->participants()->where('status', 'Attended')->count();
+        $waitlistedCount = $event->participants()->where('status', 'Waitlisted')->count();
+        $notAttendingCount = $event->participants()->where('status', 'Not Attending')->count();
         
         $totalForConversion = $registeredCount + $attendedCount;
         $conversionRate = $event->capacity > 0 ? round(($totalForConversion / $event->capacity) * 100, 1) : 0;
 
         // Calculate demographics (Status distribution)
-        $totalParticipants = $event->participants->count();
+        $totalParticipants = $event->participants()->count();
         $attendedPct = $totalParticipants > 0 ? round(($attendedCount / $totalParticipants) * 100) : 0;
         $registeredPct = $totalParticipants > 0 ? round(($registeredCount / $totalParticipants) * 100) : 0;
         $otherPct = 100 - $attendedPct - $registeredPct;
@@ -140,10 +166,14 @@ class EventController extends Controller
             $registrationCounts[] = $count;
         }
 
+        // Fetch recent participants for the table
+        $recentParticipants = $event->participants()->with('user')->latest()->take(5)->get();
+
         return view('Pages.EventDetail', compact(
             'event', 'registeredCount', 'attendedCount', 'waitlistedCount', 
             'conversionRate', 'attendedPct', 'registeredPct', 'otherPct', 
-            'topGroupPct', 'topGroupName', 'registrationDates', 'registrationCounts'
+            'topGroupPct', 'topGroupName', 'registrationDates', 'registrationCounts',
+            'recentParticipants'
         ));
     }
 

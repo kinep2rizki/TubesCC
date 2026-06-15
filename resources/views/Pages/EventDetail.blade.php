@@ -113,7 +113,7 @@
                     </tr>
                 </thead>
                 <tbody class="text-body-sm font-body-sm">
-                    @forelse($event->participants->take(5) as $participant)
+                    @forelse($recentParticipants as $participant)
                     <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/30 transition-colors">
                         <td class="p-sm md:p-md text-on-surface flex items-center gap-sm">
                             <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs">{{ substr($participant->user->name ?? 'U', 0, 2) }}</div>

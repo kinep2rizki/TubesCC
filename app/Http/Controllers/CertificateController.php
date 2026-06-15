@@ -15,6 +15,10 @@ class CertificateController extends Controller
             return redirect()->route('events')->with('error', 'The event belongs to a different community.');
         }
 
+        if (!auth()->user()->hasCommunityRole($activeCommunityId, ['Owner', 'Admin'])) {
+            return abort(403, 'You do not have permission to manage certificates for this community.');
+        }
+
         $allEvents = \App\Models\Event::where('community_id', $activeCommunityId)->get();
         $participants = \App\Models\EventParticipant::with('user')
             ->where('event_id', $eventId)
@@ -32,30 +36,19 @@ class CertificateController extends Controller
 
         $event = \App\Models\Event::findOrFail($eventId);
         
-        // Fetch all attended participants
-        $participants = \App\Models\EventParticipant::with('user')
-            ->where('event_id', $eventId)
-            ->where('status', 'Attended')
-            ->get();
-
-        foreach ($participants as $participant) {
-            // Check if certificate already exists
-            $certificate = \App\Models\Certificate::firstOrCreate(
-                ['event_participant_id' => $participant->id],
-                [
-                    'template_style' => $validated['template'],
-                    'file_url' => '/certificates/dummy-certificate.pdf', // Dummy simulated URL for now
-                    'issued_at' => now(),
-                ]
-            );
-
-            // Send notification to user
-            if ($participant->user) {
-                $participant->user->notify(new \App\Notifications\CertificateGeneratedNotification($event, $certificate));
-            }
+        $activeCommunityId = session('active_community_id');
+        if ($event->community_id != $activeCommunityId) {
+            return redirect()->route('events')->with('error', 'The event belongs to a different community.');
         }
 
-        return back()->with('success', 'Certificates generated successfully.');
+        if (!auth()->user()->hasCommunityRole($activeCommunityId, ['Owner', 'Admin'])) {
+            return abort(403, 'You do not have permission to generate certificates for this community.');
+        }
+        
+        // Dispatch the job to run in the background
+        \App\Jobs\GenerateCertificatesJob::dispatch($eventId, $validated['template']);
+
+        return back()->with('success', 'Certificate generation has started in the background. Participants will receive a notification when it is ready.');
     }
 
     public function download($certificateId)
