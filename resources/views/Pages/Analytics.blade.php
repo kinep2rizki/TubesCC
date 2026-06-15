@@ -49,7 +49,7 @@
                 <h3 class="font-label-caps text-label-caps text-on-surface-variant">Total Participants</h3>
                 <span class="text-primary bg-primary/10 px-unit py-xs rounded text-[10px] font-mono-code flex items-center gap-xs">+12.5% <span class="material-symbols-outlined text-[12px]">trending_up</span></span>
             </div>
-            <div class="font-display-lg text-display-lg text-on-surface mb-sm">24,592</div>
+            <div class="font-display-lg text-display-lg text-on-surface mb-sm">{{ number_format($totalParticipants) }}</div>
             <!-- Mini Sparkline -->
             <div class="h-16 w-full mt-auto relative">
                 <svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 30">
@@ -72,9 +72,9 @@
                 <span class="material-symbols-outlined text-outline-variant text-[16px]">info</span>
             </div>
             <div class="flex items-center justify-between mt-auto">
-                <div class="font-display-lg text-display-lg text-on-surface">94<span class="text-headline-sm text-outline">%</span></div>
+                <div class="font-display-lg text-display-lg text-on-surface">{{ number_format($successRate, 1) }}<span class="text-headline-sm text-outline">%</span></div>
                 <!-- Simple CSS Gauge -->
-                <div class="relative w-16 h-16 rounded-full flex items-center justify-center" style="background: conic-gradient(theme('colors.primary') 94%, theme('colors.surface-container-high') 0);">
+                <div class="relative w-16 h-16 rounded-full flex items-center justify-center" style="background: conic-gradient(theme('colors.primary') {{ $successRate }}%, theme('colors.surface-container-high') 0);">
                     <div class="w-12 h-12 bg-surface-container-lowest rounded-full flex items-center justify-center absolute">
                         <span class="material-symbols-outlined text-primary text-[20px]">check_circle</span>
                     </div>
@@ -88,7 +88,7 @@
                 <h3 class="font-label-caps text-label-caps text-on-surface-variant">Avg. Attendance</h3>
                 <span class="text-error bg-error/10 px-unit py-xs rounded text-[10px] font-mono-code flex items-center gap-xs">-2.1% <span class="material-symbols-outlined text-[12px]">trending_down</span></span>
             </div>
-            <div class="font-display-lg text-display-lg text-on-surface mb-sm">68<span class="text-headline-sm text-outline">%</span></div>
+            <div class="font-display-lg text-display-lg text-on-surface mb-sm">{{ number_format($avgAttendance, 1) }}<span class="text-headline-sm text-outline">%</span></div>
             <!-- Mini Bar Chart -->
             <div class="flex items-end gap-unit h-12 mt-auto">
                 <div class="w-1/6 bg-surface-container-high h-[40%] rounded-t-sm"></div>
@@ -193,33 +193,21 @@
                     </tr>
                 </thead>
                 <tbody class="text-body-sm font-body-sm">
+                    @forelse($recentEvents as $event)
                     <tr class="border-b border-outline-variant/10 hover:bg-white/[0.03] transition-colors">
-                        <td class="p-sm pl-lg text-on-surface">React Advanced Patterns</td>
-                        <td class="p-sm text-outline font-mono-code">Oct 12, 2023</td>
-                        <td class="p-sm text-on-surface font-mono-code">1,204</td>
-                        <td class="p-sm text-on-surface font-mono-code">88%</td>
-                        <td class="p-sm">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-label-caps bg-primary/10 text-primary border border-primary/20">Completed</span>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-outline-variant/10 hover:bg-white/[0.03] transition-colors">
-                        <td class="p-sm pl-lg text-on-surface">Intro to Machine Learning</td>
-                        <td class="p-sm text-outline font-mono-code">Oct 15, 2023</td>
-                        <td class="p-sm text-on-surface font-mono-code">850</td>
-                        <td class="p-sm text-on-surface font-mono-code">92%</td>
-                        <td class="p-sm">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-label-caps bg-primary/10 text-primary border border-primary/20">Completed</span>
-                        </td>
-                    </tr>
-                    <tr class="border-b border-outline-variant/10 hover:bg-white/[0.03] transition-colors">
-                        <td class="p-sm pl-lg text-on-surface">Figma for Developers</td>
-                        <td class="p-sm text-outline font-mono-code">Oct 20, 2023</td>
-                        <td class="p-sm text-on-surface font-mono-code">420</td>
+                        <td class="p-sm pl-lg text-on-surface">{{ $event->title }}</td>
+                        <td class="p-sm text-outline font-mono-code">{{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}</td>
+                        <td class="p-sm text-on-surface font-mono-code">{{ number_format($event->participants_count) }}</td>
                         <td class="p-sm text-on-surface font-mono-code">--</td>
                         <td class="p-sm">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-label-caps bg-tertiary/10 text-tertiary border border-tertiary/20">Upcoming</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-label-caps {{ $event->status == 'Completed' ? 'bg-primary/10 text-primary border border-primary/20' : ($event->status == 'Live Now' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-tertiary/10 text-tertiary border border-tertiary/20') }}">{{ $event->status }}</span>
                         </td>
                     </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center p-md text-on-surface-variant">No events found.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

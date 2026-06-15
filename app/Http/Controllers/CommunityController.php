@@ -8,8 +8,18 @@ class CommunityController extends Controller
 {
     public function index()
     {
-        $communities = Community::with('members')->get();
-        return view('Pages.Community', compact('communities'));
+        $community = Community::with(['members.user'])->first();
+        
+        // Fallback if no community exists
+        if (!$community) {
+            $community = new Community([
+                'name' => 'No Community Found', 
+                'description' => 'Create a community to get started.'
+            ]);
+            $community->setRelation('members', collect());
+        }
+
+        return view('Pages.Community', compact('community'));
     }
 
     public function store(Request $request)

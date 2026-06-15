@@ -8,7 +8,8 @@ class CertificateController extends Controller
 {
     public function index($eventId)
     {
-        return view('Pages.Certificate');
+        $event = \App\Models\Event::findOrFail($eventId);
+        return view('Pages.Certificate', compact('event'));
     }
 
     public function generate(Request $request, $eventId)

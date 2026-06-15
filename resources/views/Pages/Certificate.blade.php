@@ -120,8 +120,8 @@
                             
                             <p class="font-body-base text-body-base text-gray-600 leading-relaxed">
                                 has successfully completed all requirements for the <br/>
-                                <span class="font-semibold text-gray-900">{Event Name}</span> <br/>
-                                held on <span class="font-mono-code text-mono-code">{Event Date}</span>.
+                                <span class="font-semibold text-gray-900">{{ $event->title }}</span> <br/>
+                                held on <span class="font-mono-code text-mono-code">{{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}</span>.
                             </p>
                         </div>
                         
@@ -153,8 +153,8 @@
                             
                             <p class="text-base text-gray-700 leading-relaxed max-w-md mx-auto mt-lg">
                                 has successfully completed all requirements for the <br/>
-                                <span class="font-bold">{Event Name}</span> <br/>
-                                held on <span class="text-sm">{Event Date}</span>.
+                                <span class="font-bold">{{ $event->title }}</span> <br/>
+                                held on <span class="text-sm">{{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}</span>.
                             </p>
                         </div>
                         
@@ -190,8 +190,8 @@
                             
                             <p class="font-body-base text-body-base text-gray-600 leading-relaxed max-w-sm mb-xl">
                                 For successful completion of <br/>
-                                <span class="font-semibold text-gray-900">{Event Name}</span> <br/>
-                                on <span class="font-mono-code">{Event Date}</span>.
+                                <span class="font-semibold text-gray-900">{{ $event->title }}</span> <br/>
+                                on <span class="font-mono-code">{{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}</span>.
                             </p>
                             
                             <!-- Signatures -->
@@ -229,8 +229,8 @@
                             
                             <p class="font-body-sm text-gray-600 leading-relaxed max-w-md mx-auto mb-xl">
                                 For demonstrating exceptional skill and completing <br/>
-                                <span class="font-bold text-gray-900">{Event Name}</span> <br/>
-                                on <span class="text-gray-500">{Event Date}</span>.
+                                <span class="font-bold text-gray-900">{{ $event->title }}</span> <br/>
+                                on <span class="text-gray-500">{{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}</span>.
                             </p>
                         </div>
                         

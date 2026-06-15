@@ -20,11 +20,11 @@
             <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-md mb-sm">
                 <div>
                     <h2 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-sm">
-                        Frontend Masters
+                        {{ $community->name }}
                         <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
                     </h2>
                     <p class="font-body-sm text-body-sm text-on-surface-variant max-w-2xl">
-                        The official community for frontend developers attending PETA events. Discuss modern frameworks, UI/UX design, and web performance.
+                        {{ $community->description }}
                     </p>
                 </div>
                 <div class="flex gap-sm shrink-0">
@@ -35,11 +35,11 @@
             </div>
             <div class="flex gap-lg mt-md pt-md border-t border-outline-variant/20">
                 <div class="flex flex-col">
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">12.4k</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">{{ number_format($community->members->count()) }}</span>
                     <span class="font-label-caps text-label-caps text-outline">Total Members</span>
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">842</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">{{ number_format((int)($community->members->count() * 0.4)) }}</span>
                     <span class="font-label-caps text-label-caps text-outline">Active Today</span>
                 </div>
                 <div class="flex flex-col">
@@ -70,57 +70,33 @@
             </div>
             <!-- Member List (Scrollable) -->
             <div class="flex-1 overflow-y-auto p-xs">
-                <!-- Member Row 1 -->
+                @forelse($community->members as $member)
+                <!-- Member Row -->
                 <div class="grid grid-cols-12 gap-sm px-md py-sm items-center hover:bg-white/[0.03] rounded-lg transition-colors group border-b border-outline-variant/10 last:border-0">
                     <div class="col-span-6 md:col-span-5 flex items-center gap-md">
-                        <img alt="Sarah J." class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjbCRoOLDl4m1xVOsYPpcIktC5AokBFc2ORpERvsnE2E572ryWTWQcDf4reSL9zV9c1O-GRzRC_V8Akj40dgtMiG4Noi0ckKnrh4hycKOndOFSgu4ASc_LvPdOQ7f1xKvwGHxDpnOI6ZLhWTJCqaKu1Wn3phdjzfmMOZF9g1NR8OvwCRmY5F807oB2rXQWjL4xZwFeL9rUCrgkizodkiru3SE1QINSVlY1Xmfxd4BdA9dgBt2NihV8I3TzvhoqE7OC3UWhbQe7GIt9"/>
+                        <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-caps uppercase">{{ substr($member->user->name, 0, 2) }}</div>
                         <div class="flex flex-col">
-                            <span class="font-body-sm text-body-sm text-on-surface">Sarah Jenkins</span>
-                            <span class="font-mono-code text-mono-code text-outline-variant text-[11px]">@sarahj_dev</span>
+                            <span class="font-body-sm text-body-sm text-on-surface">{{ $member->user->name }}</span>
+                            <span class="font-mono-code text-mono-code text-outline-variant text-[11px]">{{ '@' . strtolower(str_replace(' ', '_', $member->user->name)) }}</span>
                         </div>
                     </div>
-                    <div class="col-span-3 hidden md:block font-body-sm text-body-sm text-on-surface-variant">Oct 12, 2023</div>
+                    <div class="col-span-3 hidden md:block font-body-sm text-body-sm text-on-surface-variant">{{ $member->created_at->format('M d, Y') }}</div>
                     <div class="col-span-4 md:col-span-3 flex justify-center">
-                        <span class="bg-error-container/20 text-error border border-error/30 px-sm py-xs rounded font-label-caps text-[10px]">Admin</span>
+                        @if($member->role === 'Admin' || $member->role === 'Owner')
+                        <span class="bg-error-container/20 text-error border border-error/30 px-sm py-xs rounded font-label-caps text-[10px]">{{ $member->role }}</span>
+                        @elseif($member->role === 'Moderator')
+                        <span class="bg-tertiary-container/20 text-tertiary border border-tertiary/30 px-sm py-xs rounded font-label-caps text-[10px]">{{ $member->role }}</span>
+                        @else
+                        <span class="bg-surface-variant text-on-surface-variant border border-outline-variant/50 px-sm py-xs rounded font-label-caps text-[10px]">{{ $member->role }}</span>
+                        @endif
                     </div>
                     <div class="col-span-2 md:col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
                     </div>
                 </div>
-                <!-- Member Row 2 -->
-                <div class="grid grid-cols-12 gap-sm px-md py-sm items-center hover:bg-white/[0.03] rounded-lg transition-colors group border-b border-outline-variant/10 last:border-0">
-                    <div class="col-span-6 md:col-span-5 flex items-center gap-md">
-                        <img alt="Marcus T." class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLn5GUpSQxXbe_onhJnkkDRUJYuHWF4FqY1H04yqOTWBz5v6fJRRyC8ff3dUs8iAEoHY3QOwQiKTAAI3O01k5l-a9WyaiCCCqRYTFFVVdjms-3Bwwz5G2mNF8MhFDwJ6uBaNP56Yr-UxZYotpHhmrPNbcGANqYoc_0rhtsdvCcSjT4-f-hwojxaQvpCwDa5Byk_0vH9JVUuawXrdV-Lp5GNIVt7JzqEqrs06FYOiTWckG1Vp2LAUou6g9Jsh8Ehp5nNlCTIq69KW2Y"/>
-                        <div class="flex flex-col">
-                            <span class="font-body-sm text-body-sm text-on-surface">Marcus Thompson</span>
-                            <span class="font-mono-code text-mono-code text-outline-variant text-[11px]">@marcus_t</span>
-                        </div>
-                    </div>
-                    <div class="col-span-3 hidden md:block font-body-sm text-body-sm text-on-surface-variant">Nov 05, 2023</div>
-                    <div class="col-span-4 md:col-span-3 flex justify-center">
-                        <span class="bg-tertiary-container/20 text-tertiary border border-tertiary/30 px-sm py-xs rounded font-label-caps text-[10px]">Moderator</span>
-                    </div>
-                    <div class="col-span-2 md:col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
-                    </div>
-                </div>
-                <!-- Member Row 3 -->
-                <div class="grid grid-cols-12 gap-sm px-md py-sm items-center hover:bg-white/[0.03] rounded-lg transition-colors group border-b border-outline-variant/10 last:border-0">
-                    <div class="col-span-6 md:col-span-5 flex items-center gap-md">
-                        <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-caps">EL</div>
-                        <div class="flex flex-col">
-                            <span class="font-body-sm text-body-sm text-on-surface">Elena Rodriguez</span>
-                            <span class="font-mono-code text-mono-code text-outline-variant text-[11px]">@elena_codes</span>
-                        </div>
-                    </div>
-                    <div class="col-span-3 hidden md:block font-body-sm text-body-sm text-on-surface-variant">Dec 01, 2023</div>
-                    <div class="col-span-4 md:col-span-3 flex justify-center">
-                        <span class="bg-surface-variant text-on-surface-variant border border-outline-variant/50 px-sm py-xs rounded font-label-caps text-[10px]">Member</span>
-                    </div>
-                    <div class="col-span-2 md:col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
-                    </div>
-                </div>
+                @empty
+                <div class="p-md text-center text-on-surface-variant text-sm">No members found.</div>
+                @endforelse
             </div>
         </div>
 

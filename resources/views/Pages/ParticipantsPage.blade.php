@@ -92,49 +92,22 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-outline-variant/20">
+                        @forelse($participants as $participant)
                         <x-participant-row 
-                            id="p1"
-                            name="Alex Rivera"
-                            role="Speaker"
-                            email="arivera@quantum.io"
-                            institution="Quantum Systems"
-                            status="Confirmed"
-                            date="Oct 24, 2023"
-                            avatarUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuA56Q6WosIQITEvRqXuR0oycLwi0fYXwOiVwEgFypCysEI3u1XLNeISgS9JEajKv3KY0CTsVnsDHLJzWlEovKg8RhZPwpVxt8IXgEeTZhw_vkTpdgS3h4UNnjzWAvbdybBx9XcT-v6A1ADA5Sy4Fm-TEhblzbEFSKFzE5LrZ8Gny-vAGjGwR4JK2c9kkDZwMYbGTSozWXvvZ5v15TWb8Ve5Zu4hgrAi1lk4E4rNFl9TAJP9RbNlgJRxU7zKdQ0l5MH-wNxfdhZpQPMJ"
-                        />
-                        
-                        <x-participant-row 
-                            id="p2"
-                            name="Sarah Jenkins"
+                            id="p{{ $participant->id }}"
+                            name="{{ $participant->user->name ?? 'Unknown' }}"
                             role="Attendee"
-                            email="s.jenkins@nebula.dev"
-                            institution="Nebula Development"
-                            status="Pending Payment"
-                            date="Oct 25, 2023"
-                            avatarInitials="SJ"
+                            email="{{ $participant->user->email ?? 'N/A' }}"
+                            institution="General Participant"
+                            status="{{ $participant->status }}"
+                            date="{{ $participant->created_at->format('M d, Y') }}"
+                            avatarInitials="{{ substr($participant->user->name ?? 'U', 0, 2) }}"
                         />
-                        
-                        <x-participant-row 
-                            id="p3"
-                            name="Emily Chen"
-                            role="VIP"
-                            email="echen@horizon.ai"
-                            institution="Horizon AI Research"
-                            status="Checked In"
-                            date="Oct 26, 2023"
-                            avatarUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuCPYGlUPBhv_fjA9oOm0n0dPZbLQM7pOe4_f72O-obhTDwRw6-e0JgCuef3rM4eoJveOI_iu1UqcJCGrH6X8ElCjHvWkt_0bBVJAhfg0uvI6m4gn1SQVjKU0DLabTpB2XrRPM5zFNA8Ria_zQBUl7iiZ-QN8ylGkjcz5SbpVtGBVcvdqoobJ9qyNJShu2toL9IEvL86wNdxZaJ580PSojByH_MC6ex7KJNnpALEgupE_RaqrYEeZ_CBw5swebx5SJeUjxnw3iJmYiEU"
-                        />
-                        
-                        <x-participant-row 
-                            id="p4"
-                            name="David Kim"
-                            role="Attendee"
-                            email="dkim@solaris.net"
-                            institution="Solaris Networks"
-                            status="Cancelled"
-                            date="Oct 26, 2023"
-                            avatarUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuBRx9pGtrp2mf_D_ayfGO0jUMtUBKVUcwdGuJqE3n33SlDM5Vm0-LMfxdoi224l60EYtX4vWEnLK-wQCqQD6PmGYkkW6YoDtb8B_YxMWH_-YSnNUaPeLB5jsGeo-biqPxp7k4p1pNumj07Q2UwUCoAiH1yQLkhrZBL4BiNBiRFl_8iDfs893ZJ9A5psIKhh07cHFTFt0hCkmJgwDY3766RnMo0-jiCHNwksvM8g_x8EwS6Dt_brcUguJFtHNVilEYLvDM3OX-ux9_nP"
-                        />
+                        @empty
+                        <tr>
+                            <td colspan="7" class="text-center p-md text-on-surface-variant">No participants found.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

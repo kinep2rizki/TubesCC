@@ -8,8 +8,17 @@ class AnalyticsController extends Controller
 {
     public function index()
     {
-        // Fetch data for charts
-        return view('Pages.Analytics');
+        $totalParticipants = \App\Models\EventParticipant::count();
+        $totalAttendances = \App\Models\Attendance::count();
+        $avgAttendance = $totalParticipants > 0 ? ($totalAttendances / $totalParticipants) * 100 : 0;
+        
+        $completedEvents = \App\Models\Event::where('status', 'Completed')->count();
+        $totalEvents = \App\Models\Event::count();
+        $successRate = $totalEvents > 0 ? ($completedEvents / $totalEvents) * 100 : 0;
+
+        $recentEvents = \App\Models\Event::withCount('participants')->latest()->take(5)->get();
+
+        return view('Pages.Analytics', compact('totalParticipants', 'avgAttendance', 'successRate', 'recentEvents'));
     }
 
     public function export(Request $request)

@@ -8,7 +8,7 @@
     <div class="flex justify-between items-end mb-sm">
         <div>
             <h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">Live Check-in</h2>
-            <p class="font-body-base text-body-base text-on-surface-variant mt-xs">Global Tech Summit 2024</p>
+            <p class="font-body-base text-body-base text-on-surface-variant mt-xs">{{ $event->title }}</p>
         </div>
         
         <div class="flex items-center gap-sm">
@@ -61,9 +61,9 @@
                         <span class="material-symbols-outlined text-primary">how_to_reg</span>
                     </div>
                     <div>
-                        <div class="font-headline-sm text-headline-sm text-on-surface">1,245</div>
+                        <div class="font-headline-sm text-headline-sm text-on-surface">{{ number_format($presentCount) }}</div>
                         <div class="font-body-sm text-body-sm text-primary mt-xs flex items-center gap-xs">
-                            <span class="material-symbols-outlined text-[16px]">trending_up</span> +45 this hour
+                            <span class="material-symbols-outlined text-[16px]">trending_up</span> Live
                         </div>
                     </div>
                 </div>
@@ -73,11 +73,11 @@
                         <span class="material-symbols-outlined text-outline-variant">person_off</span>
                     </div>
                     <div>
-                        <div class="font-headline-sm text-headline-sm text-on-surface">2,500</div>
-                        <div class="font-body-sm text-body-sm text-outline-variant mt-xs">49.8% Capacity</div>
+                        <div class="font-headline-sm text-headline-sm text-on-surface">{{ number_format($expectedCount) }}</div>
+                        <div class="font-body-sm text-body-sm text-outline-variant mt-xs">{{ $expectedCount > 0 ? number_format(($presentCount / $expectedCount) * 100, 1) : 0 }}% Capacity</div>
                     </div>
                     <div class="absolute bottom-0 left-0 h-1 bg-surface-variant w-full">
-                        <div class="h-full bg-outline-variant w-[49.8%]"></div>
+                        <div class="h-full bg-outline-variant" style="width: {{ $expectedCount > 0 ? ($presentCount / $expectedCount) * 100 : 0 }}%;"></div>
                     </div>
                 </div>
             </div>
@@ -91,33 +91,16 @@
                     </button>
                 </div>
                 <div class="flex-1 overflow-y-auto p-md flex flex-col gap-unit custom-scrollbar">
-                    
+                    @forelse($attendances->take(5) as $attendance)
                     <x-feed-item 
                         type="success" 
-                        name="Sarah Jenkins" 
-                        description="VIP Access • 10:42 AM" 
+                        initials="{{ substr($attendance->participant->user->name ?? 'U', 0, 2) }}" 
+                        name="{{ $attendance->participant->user->name ?? 'Unknown' }}" 
+                        description="{{ $attendance->participant->status }} • {{ $attendance->check_in_time ? $attendance->check_in_time->format('h:i A') : $attendance->created_at->format('h:i A') }}" 
                     />
-                    
-                    <x-feed-item 
-                        type="warning" 
-                        name="Unknown ID" 
-                        description="Invalid QR • 10:41 AM" 
-                    />
-                    
-                    <x-feed-item 
-                        type="default" 
-                        initials="JD" 
-                        name="John Doe" 
-                        description="General • 10:39 AM" 
-                    />
-                    
-                    <x-feed-item 
-                        type="default" 
-                        initials="MR" 
-                        name="Mike Ross" 
-                        description="Speaker • 10:35 AM" 
-                    />
-
+                    @empty
+                    <div class="text-center text-on-surface-variant p-md">No logs available.</div>
+                    @endforelse
                 </div>
                 
                 <!-- Gradient fade at bottom -->
@@ -146,27 +129,19 @@
                     </tr>
                 </thead>
                 <tbody class="font-mono-code text-mono-code text-on-surface">
+                    @forelse($attendances->take(10) as $attendance)
                     <x-log-row 
-                        timestamp="10:42:15"
-                        name="Sarah Jenkins"
-                        ticketType="VIP"
+                        timestamp="{{ $attendance->check_in_time ? $attendance->check_in_time->format('h:i:s') : $attendance->created_at->format('h:i:s') }}"
+                        name="{{ $attendance->participant->user->name ?? 'Unknown' }}"
+                        ticketType="Standard"
                         status="granted"
                         gate="G-01"
                     />
-                    <x-log-row 
-                        timestamp="10:41:02"
-                        name="Unknown ID"
-                        ticketType="N/A"
-                        status="denied"
-                        gate="G-01"
-                    />
-                    <x-log-row 
-                        timestamp="10:39:44"
-                        name="John Doe"
-                        ticketType="General"
-                        status="granted"
-                        gate="G-01"
-                    />
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center p-md text-on-surface-variant">No check-in logs.</td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

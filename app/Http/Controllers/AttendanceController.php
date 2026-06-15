@@ -8,7 +8,16 @@ class AttendanceController extends Controller
 {
     public function index($eventId)
     {
-        return view('Pages.Attendance');
+        $event = \App\Models\Event::findOrFail($eventId);
+        $attendances = \App\Models\Attendance::with(['participant.user'])
+            ->whereHas('participant', function($query) use ($eventId) {
+                $query->where('event_id', $eventId);
+            })->latest()->get();
+            
+        $presentCount = $attendances->count();
+        $expectedCount = \App\Models\EventParticipant::where('event_id', $eventId)->count();
+        
+        return view('Pages.Attendance', compact('event', 'attendances', 'presentCount', 'expectedCount'));
     }
 
     public function checkIn(Request $request)

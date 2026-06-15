@@ -33,56 +33,25 @@
 
     <!-- Events Grid (Bento/Card Layout) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-        
+        @forelse($eventsList as $event)
         <x-event-card 
-            title="Global AI Hack 2024"
-            type="Hackathon"
-            date="Oct 15"
-            status="Upcoming"
-            participantsCount="45 Participants"
-            avatarsLabel="+42"
+            title="{{ $event->title }}"
+            type="{{ $event->community->name ?? 'General' }}"
+            date="{{ \Carbon\Carbon::parse($event->start_date)->format('M d') }}"
+            status="{{ $event->status }}"
+            participantsCount="{{ $event->participants_count }} Participants"
+            avatarsLabel="+{{ max(0, $event->participants_count - 3) }}"
             progressLabel="Attendance Target"
             progressValue="85%"
             imageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuCCJzpsovxejyPZao4ZlZ6jp2V_ooh-F6tRVEq_s-y7ZfXOewlRmauNdg_e0b9T9CF3KapW1we9FZoNHCKfC9vLvTGpzA9UPyOV3oCtOWrfIusmzJBMfWI5I10f_Lmbr4qx0dYKDBnWnm7uVkbQoZYOJq_fGIQ-j6Y-9qXGq_wa4ErxsJ2yAdiVMLvON3KnJB2d59B9cG_puGMXs6ozBSsoZOHtjSC6c9M8173lkkl8q0PnoLpTW0AWi7SirXWAzIdDp0bPFIpOkoN0"
             hasProgressGradient="true"
+            link="{{ route('event-detail', $event->id) }}"
         />
-
-        <x-event-card 
-            title="DevOps Summit V2"
-            type="Conference"
-            date="Oct 10"
-            status="Live Now"
-            participantsCount="1,204 Participants"
-            avatarsLabel="+1k"
-            progressLabel="Attendance Rate"
-            progressValue="92%"
-            imageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuA-9D4A79WZOj224tXp7KC5aTfw7dI0NPiEbX0q5eYc13SKmilyfrwVFF-4_DHiOTeWkjO31IHEFSoYFoWTK2Z_VzEUqAJj7A1dUHVRkgI_HAWhshFn4EKRVao2E5VItNshEqaBVFJ45ibROMWczocLDjKqZZudHH5Ry2TWGXL0FN7rk_zPpx79o2VDZUKC9YxNWXDAwp2E5BuSXPZ5Ms4H1oeegb_TYUcPjT6FLT4ADegrSuLw2beYI4luoZA6JI2sZjoBDZU5uJqD"
-            overlayClass="bg-gradient-to-br from-emerald-900/40 to-teal-900/40 mix-blend-overlay"
-            statusClass="text-emerald-400 border border-emerald-400/30"
-            typeClass="text-emerald-400 bg-emerald-400/10"
-            progressTextClass="text-emerald-400"
-            progressBarClass="bg-emerald-400"
-        />
-
-        <x-event-card 
-            title="React Performance Deep Dive"
-            type="Workshop"
-            date="Sep 28"
-            status="Completed"
-            participantsCount="30 Participants"
-            progressLabel="Final Attendance"
-            progressValue="100%"
-            imageUrl="https://lh3.googleusercontent.com/aida-public/AB6AXuB18Kazuc5kY3kvZIlckKuWqoZJi7k7sS_Z8vPLHQ5DqAsA48hPQ32WgO9EPiagr1VsnyJoTwO5E7GAWgomiaO5eSIBu2MPseLUVVC_8ezwaaGPQRbPsVXrjydtbmzLiNhxn42zBXCNDEJXJnhIXDdbsuJO69D6yCo0fZOSRL5QCywFJ2Say1PVrk5mz6iHFBT7d3F-MCRD2WslCDK_cP9372aPhXwTx1WtbPTIA5YwahNkM0jhF8twxolgE8rccv97Hwd3gIAMZIPm"
-            cardClass="opacity-70"
-            imageContainerClass="grayscale"
-            overlayClass="bg-surface-container-lowest/60"
-            statusClass="text-on-surface-variant border border-outline-variant/30"
-            typeClass="text-on-surface-variant bg-surface-container-high"
-            titleClass="text-on-surface-variant"
-            progressTextClass="text-on-surface-variant"
-            progressBarClass="bg-outline-variant"
-        />
-
+        @empty
+        <div class="col-span-full text-center text-on-surface-variant p-lg bg-surface-container rounded-xl border border-outline-variant/30">
+            No events found.
+        </div>
+        @endforelse
     </div>
 </div>
 @endsection

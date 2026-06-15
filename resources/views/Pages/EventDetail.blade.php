@@ -14,14 +14,16 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-md mb-xl">
         <div class="flex flex-col gap-sm">
             <div class="flex items-center gap-sm">
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-primary/20 text-primary border border-primary/30">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold {{ $event->status === 'Live Now' ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-surface-variant text-on-surface-variant border border-outline-variant/30' }}">
+                    @if($event->status === 'Live Now')
                     <span class="w-1.5 h-1.5 bg-primary rounded-full mr-1.5 animate-pulse"></span>
-                    Live
+                    @endif
+                    {{ $event->status }}
                 </span>
-                <span class="text-on-surface-variant text-body-sm font-body-sm font-mono-code">ID: EVT-9821</span>
+                <span class="text-on-surface-variant text-body-sm font-body-sm font-mono-code">ID: EVT-{{ $event->id }}</span>
             </div>
-            <h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Global AI Hackathon 2024</h2>
-            <p class="text-on-surface-variant text-body-base font-body-base max-w-2xl">A 48-hour intensive coding event focusing on generative AI solutions for climate tech. Expecting high turnout from regional universities.</p>
+            <h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">{{ $event->title }}</h2>
+            <p class="text-on-surface-variant text-body-base font-body-base max-w-2xl">{{ $event->description ?? 'No description provided.' }}</p>
         </div>
         <div class="flex items-center gap-sm mt-4 md:mt-0 w-full md:w-auto">
             <button class="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface-container-low text-on-surface hover:bg-surface-variant transition-colors font-label-caps text-label-caps">
@@ -54,11 +56,11 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-lg relative z-10">
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Total Capacity</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold">500</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold">{{ $event->capacity ?? 500 }}</span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Registered</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary font-bold">482</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary font-bold">{{ $event->participants->count() }}</span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Waitlisted</span>
@@ -163,33 +165,21 @@
                     </tr>
                 </thead>
                 <tbody class="text-body-sm font-body-sm">
+                    @forelse($event->participants->take(5) as $participant)
                     <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/30 transition-colors">
                         <td class="p-sm md:p-md text-on-surface flex items-center gap-sm">
-                            <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs">JD</div>
-                            John Doe
+                            <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs">{{ substr($participant->user->name ?? 'U', 0, 2) }}</div>
+                            {{ $participant->user->name ?? 'Unknown' }}
                         </td>
-                        <td class="p-sm md:p-md text-on-surface-variant">john.d@example.com</td>
+                        <td class="p-sm md:p-md text-on-surface-variant">{{ $participant->user->email ?? 'N/A' }}</td>
                         <td class="p-sm md:p-md"><span class="px-2 py-1 rounded bg-surface-container-highest text-on-surface-variant text-xs border border-outline-variant/30">Standard</span></td>
-                        <td class="p-sm md:p-md text-right"><span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Confirmed</span></td>
-                    </tr>
-                    <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/30 transition-colors">
-                        <td class="p-sm md:p-md text-on-surface flex items-center gap-sm">
-                            <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs">AS</div>
-                            Alice Smith
+                        <td class="p-sm md:p-md text-right">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium {{ $participant->status == 'Attended' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20' }}">{{ $participant->status }}</span>
                         </td>
-                        <td class="p-sm md:p-md text-on-surface-variant">alice.s@university.edu</td>
-                        <td class="p-sm md:p-md"><span class="px-2 py-1 rounded bg-primary/10 text-primary text-xs border border-primary/20">Student</span></td>
-                        <td class="p-sm md:p-md text-right"><span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Confirmed</span></td>
                     </tr>
-                    <tr class="hover:bg-surface-variant/30 transition-colors">
-                        <td class="p-sm md:p-md text-on-surface flex items-center gap-sm">
-                            <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs">RJ</div>
-                            Robert Jones
-                        </td>
-                        <td class="p-sm md:p-md text-on-surface-variant">rob.j@techcorp.com</td>
-                        <td class="p-sm md:p-md"><span class="px-2 py-1 rounded bg-secondary/10 text-secondary text-xs border border-secondary/20">VIP</span></td>
-                        <td class="p-sm md:p-md text-right"><span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">Pending Payment</span></td>
-                    </tr>
+                    @empty
+                    <tr><td colspan="4" class="text-center p-md text-on-surface-variant border-b border-outline-variant/20">No participants yet.</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

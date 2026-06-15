@@ -8,14 +8,40 @@ class EventController extends Controller
 {
     public function index()
     {
-        // This acts as the main dashboard overview
-        $events = Event::with('community')->get();
-        return view('Pages.Dashboard', compact('events'));
+        // Calculate real stats from the database
+        $totalEvents = \App\Models\Event::count();
+        $totalParticipants = \App\Models\EventParticipant::count();
+        
+        $attendedCount = \App\Models\Attendance::count();
+        $attendanceRate = $totalParticipants > 0 ? round(($attendedCount / $totalParticipants) * 100, 1) : 0;
+        
+        $certificatesGenerated = \App\Models\Certificate::count();
+
+        // Get upcoming events
+        $upcomingEvents = \App\Models\Event::orderBy('start_date', 'desc')->take(3)->get();
+
+        // Get recent activities
+        $recentActivities = \App\Models\ActivityLog::with('user')->orderBy('created_at', 'desc')->take(5)->get();
+
+        return view('Pages.Dashboard', compact(
+            'totalEvents',
+            'totalParticipants',
+            'attendanceRate',
+            'certificatesGenerated',
+            'upcomingEvents',
+            'recentActivities'
+        ));
+    }
+
+    public function manage()
+    {
+        $eventsList = \App\Models\Event::with('community')->withCount('participants')->get();
+        return view('Pages.EventManagement', compact('eventsList'));
     }
 
     public function show($id)
     {
-        $event = Event::with('participants')->findOrFail($id);
+        $event = \App\Models\Event::with('participants.user')->findOrFail($id);
         return view('Pages.EventDetail', compact('event'));
     }
 

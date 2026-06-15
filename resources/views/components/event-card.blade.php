@@ -21,7 +21,7 @@
     'link' => null
 ])
 
-<a href="{{ $link ?? route('event-detail') }}" class="glass-panel rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block {{ $cardClass }}">
+<a href="{{ $link ?? route('event-detail', ['id' => 1]) }}" class="glass-panel rounded-xl overflow-hidden group hover:-translate-y-1 transition-transform duration-300 block {{ $cardClass }}">
     <!-- Image Banner Placeholder -->
     <div class="h-32 w-full bg-surface-variant relative overflow-hidden {{ $imageContainerClass }}">
         <div class="absolute inset-0 {{ $overlayClass }} z-10"></div>

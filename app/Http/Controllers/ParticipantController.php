@@ -8,8 +8,9 @@ class ParticipantController extends Controller
 {
     public function index($eventId)
     {
-        // $participants = EventParticipant::where('event_id', $eventId)->get();
-        return view('Pages.ParticipantsPage');
+        $event = \App\Models\Event::findOrFail($eventId);
+        $participants = \App\Models\EventParticipant::with('user')->where('event_id', $eventId)->get();
+        return view('Pages.ParticipantsPage', compact('event', 'participants'));
     }
 
     public function store(Request $request, $eventId)

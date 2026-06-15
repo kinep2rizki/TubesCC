@@ -40,7 +40,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">1,248</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ number_format($totalEvents) }}</span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_up</span> 12.5%</span>
@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">45.2k</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ number_format($totalParticipants) }}</span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_up</span> 8.1%</span>
@@ -74,7 +74,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">89.4%</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ $attendanceRate }}%</span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-error flex items-center bg-error/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_down</span> 1.2%</span>
@@ -91,7 +91,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">128k</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ number_format($certificatesGenerated) }}</span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_up</span> 24.3%</span>
@@ -144,39 +144,21 @@
                 <button class="text-primary hover:underline text-sm font-label-caps">View All</button>
             </div>
             <div class="flex flex-col gap-sm">
+                @forelse($upcomingEvents as $event)
                 <!-- Event Item -->
                 <div class="flex gap-md p-sm rounded-lg hover:bg-surface-variant/50 cursor-pointer transition-colors border border-transparent hover:border-outline-variant/30 group">
                     <div class="w-12 h-12 rounded bg-surface-variant flex flex-col items-center justify-center border border-outline-variant/30">
-                        <span class="text-[10px] text-on-surface-variant font-label-caps uppercase">Oct</span>
-                        <span class="text-lg font-bold text-primary leading-none mt-0.5">24</span>
+                        <span class="text-[10px] text-on-surface-variant font-label-caps uppercase">{{ \Carbon\Carbon::parse($event->start_date)->format('M') }}</span>
+                        <span class="text-lg font-bold text-primary leading-none mt-0.5">{{ \Carbon\Carbon::parse($event->start_date)->format('d') }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h4 class="text-on-surface font-body-sm font-bold truncate group-hover:text-primary transition-colors">Web3 Developer Summit</h4>
-                        <p class="text-outline text-xs truncate">Main Hall A • 09:00 AM</p>
+                        <h4 class="text-on-surface font-body-sm font-bold truncate group-hover:text-primary transition-colors">{{ $event->title }}</h4>
+                        <p class="text-outline text-xs truncate">{{ $event->location ?? 'Online' }} • {{ \Carbon\Carbon::parse($event->start_date)->format('H:i A') }}</p>
                     </div>
                 </div>
-                <!-- Event Item -->
-                <div class="flex gap-md p-sm rounded-lg hover:bg-surface-variant/50 cursor-pointer transition-colors border border-transparent hover:border-outline-variant/30 group">
-                    <div class="w-12 h-12 rounded bg-surface-variant flex flex-col items-center justify-center border border-outline-variant/30">
-                        <span class="text-[10px] text-on-surface-variant font-label-caps uppercase">Oct</span>
-                        <span class="text-lg font-bold text-on-surface leading-none mt-0.5">28</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="text-on-surface font-body-sm font-bold truncate group-hover:text-primary transition-colors">Cloud Architecture Workshop</h4>
-                        <p class="text-outline text-xs truncate">Virtual Room 3 • 14:00 PM</p>
-                    </div>
-                </div>
-                <!-- Event Item -->
-                <div class="flex gap-md p-sm rounded-lg hover:bg-surface-variant/50 cursor-pointer transition-colors border border-transparent hover:border-outline-variant/30 group">
-                    <div class="w-12 h-12 rounded bg-surface-variant flex flex-col items-center justify-center border border-outline-variant/30">
-                        <span class="text-[10px] text-on-surface-variant font-label-caps uppercase">Nov</span>
-                        <span class="text-lg font-bold text-on-surface leading-none mt-0.5">02</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="text-on-surface font-body-sm font-bold truncate group-hover:text-primary transition-colors">AI Hackathon Kickoff</h4>
-                        <p class="text-outline text-xs truncate">Innovation Lab • 10:00 AM</p>
-                    </div>
-                </div>
+                @empty
+                <div class="p-sm text-sm text-on-surface-variant text-center">No upcoming events found.</div>
+                @endforelse
             </div>
         </div>
 
@@ -189,30 +171,19 @@
                 <!-- Timeline Line -->
                 <div class="absolute top-2 bottom-2 left-[15px] w-px bg-outline-variant/30"></div>
                 <div class="flex flex-col gap-md">
+                    @forelse($recentActivities as $index => $activity)
                     <!-- Activity Item -->
                     <div class="relative pl-lg">
-                        <div class="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(173,198,255,0.6)] z-10 border-2 border-surface-container"></div>
-                        <p class="text-xs text-outline mb-0.5 font-mono-code">10 mins ago</p>
-                        <p class="text-sm text-on-surface"><span class="font-bold">250 Certificates</span> successfully generated for <span class="text-primary cursor-pointer hover:underline">React Advanced Masterclass</span>.</p>
+                        <div class="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full {{ $index === 0 ? 'bg-primary shadow-[0_0_8px_rgba(173,198,255,0.6)]' : 'bg-outline-variant' }} z-10 border-2 border-surface-container"></div>
+                        <p class="text-xs text-outline mb-0.5 font-mono-code">{{ $activity->created_at->diffForHumans() }}</p>
+                        <p class="text-sm text-on-surface">
+                            <span class="font-bold">{{ $activity->user->name ?? 'System' }}</span>
+                            {{ $activity->description }}
+                        </p>
                     </div>
-                    <!-- Activity Item -->
-                    <div class="relative pl-lg">
-                        <div class="absolute left-[-4px] top-1 w-2 h-2 rounded-full bg-outline-variant z-10 border-2 border-surface-container"></div>
-                        <p class="text-xs text-outline mb-0.5 font-mono-code">2 hours ago</p>
-                        <p class="text-sm text-on-surface">New event draft <span class="text-primary cursor-pointer hover:underline">Cybersecurity Panel 2024</span> created by Admin.</p>
-                    </div>
-                    <!-- Activity Item -->
-                    <div class="relative pl-lg">
-                        <div class="absolute left-[-4px] top-1 w-2 h-2 rounded-full bg-outline-variant z-10 border-2 border-surface-container"></div>
-                        <p class="text-xs text-outline mb-0.5 font-mono-code">5 hours ago</p>
-                        <p class="text-sm text-on-surface">Attendance spike detected. <span class="font-bold text-emerald-400">95%</span> check-in rate reached for Morning Keynote.</p>
-                    </div>
-                    <!-- Activity Item -->
-                    <div class="relative pl-lg">
-                        <div class="absolute left-[-4px] top-1 w-2 h-2 rounded-full bg-outline-variant z-10 border-2 border-surface-container"></div>
-                        <p class="text-xs text-outline mb-0.5 font-mono-code">Yesterday</p>
-                        <p class="text-sm text-on-surface">System update completed. Performance improvements applied to dashboard charts.</p>
-                    </div>
+                    @empty
+                    <div class="p-sm text-sm text-on-surface-variant">No recent activities found.</div>
+                    @endforelse
                 </div>
             </div>
         </div>

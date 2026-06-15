@@ -35,17 +35,17 @@
             <span class="font-label-caps text-label-caps">Events</span>
         </a>
         <!-- Participants Tab -->
-        <a class="flex items-center gap-md {{ request()->routeIs('participants') ? $activeClass : $inactiveClass }}" href="{{ route('participants') }}">
+        <a class="flex items-center gap-md {{ request()->routeIs('participants') ? $activeClass : $inactiveClass }}" href="{{ route('participants', ['eventId' => 1]) }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('participants') ? '1' : '0' }};">group</span>
             <span class="font-label-caps text-label-caps">Participants</span>
         </a>
         <!-- Attendance Tab -->
-        <a class="flex items-center gap-md {{ request()->routeIs('attendance') ? $activeClass : $inactiveClass }}" href="{{ route('attendance') }}">
+        <a class="flex items-center gap-md {{ request()->routeIs('attendance') ? $activeClass : $inactiveClass }}" href="{{ route('attendance', ['eventId' => 1]) }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('attendance') ? '1' : '0' }};">fact_check</span>
             <span class="font-label-caps text-label-caps">Attendance</span>
         </a>
         <!-- Certificates Tab -->
-        <a class="flex items-center gap-md {{ request()->routeIs('certificates') ? $activeClass : $inactiveClass }}" href="{{ route('certificates') }}">
+        <a class="flex items-center gap-md {{ request()->routeIs('certificates') ? $activeClass : $inactiveClass }}" href="{{ route('certificates', ['eventId' => 1]) }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('certificates') ? '1' : '0' }};">card_membership</span>
             <span class="font-label-caps text-label-caps">Certificates</span>
         </a>

@@ -145,10 +145,13 @@
                         <span class="font-body-sm text-body-sm">My Profile</span>
                     </a>
                     <div class="h-px w-full bg-outline-variant/30 my-1"></div>
-                    <a href="#" class="flex items-center gap-3 px-md py-sm hover:bg-error/10 text-error transition-colors group">
-                        <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">logout</span>
-                        <span class="font-body-sm text-body-sm font-semibold">Log Out</span>
-                    </a>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full flex items-center gap-3 px-md py-sm hover:bg-error/10 text-error transition-colors group text-left">
+                            <span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">logout</span>
+                            <span class="font-body-sm text-body-sm font-semibold">Log Out</span>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

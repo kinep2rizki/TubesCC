@@ -5,19 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CommunityMember extends Model
+class ActivityLog extends Model
 {
     use HasFactory;
-    protected $fillable = [
-        'community_id',
-        'user_id',
-        'role',
-    ];
 
-    public function community()
-    {
-        return $this->belongsTo(Community::class);
-    }
+    protected $fillable = [
+        'user_id',
+        'action',
+        'description',
+        'ip_address',
+    ];
 
     public function user()
     {
