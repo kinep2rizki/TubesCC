@@ -131,14 +131,14 @@
             </button>
             <div x-data="{ openAccountMenu: false }" class="relative ml-xs">
                 <button @click="openAccountMenu = !openAccountMenu" @click.outside="openAccountMenu = false" class="rounded-full overflow-hidden border border-outline-variant/50 hover:border-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background flex items-center justify-center">
-                    <img alt="User profile" class="w-8 h-8 object-cover" src="https://ui-avatars.com/api/?name=Admin+User&background=4d8eff&color=fff"/>
+                    <img alt="User profile" class="w-8 h-8 object-cover" src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name ?? 'User') }}&background=4d8eff&color=fff"/>
                 </button>
 
                 <!-- Pop-up Menu -->
                 <div x-show="openAccountMenu" x-transition.origin.top.right style="display: none;" class="absolute top-full right-0 mt-2 w-48 bg-surface-container-high border border-outline-variant/30 rounded-lg shadow-xl overflow-hidden py-1 z-50">
                     <div class="px-md py-sm border-b border-outline-variant/30 mb-1">
-                        <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-tight">Admin User</p>
-                        <p class="text-[10px] text-on-surface-variant font-mono-code leading-tight mt-1">admin@peta.dev</p>
+                        <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-tight">{{ Auth::user()->name ?? 'Guest User' }}</p>
+                        <p class="text-[10px] text-on-surface-variant font-mono-code leading-tight mt-1">{{ Auth::user()->email ?? 'guest@peta.com' }}</p>
                     </div>
                     <a href="{{ route('settings') }}" class="flex items-center gap-3 px-md py-sm hover:bg-white/5 transition-colors text-on-surface">
                         <span class="material-symbols-outlined text-[18px]">person</span>

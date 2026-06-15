@@ -3,20 +3,127 @@
 @section('title', 'Certificates')
 
 @section('content')
-<div class="max-w-container-max w-full mx-auto flex flex-col gap-lg h-full pb-32 md:pb-2xl">
+<div x-data="{ 
+        template: 'modern',
+        isGenerating: false,
+        showModal: false,
+        selectedEventId: {{ $event->id }},
+        selectedParticipants: [],
+        selectAll: false,
+        
+        toggleSelectAll() {
+            this.selectAll = !this.selectAll;
+            if (this.selectAll) {
+                // Collect all checkboxes that are rendered
+                this.selectedParticipants = Array.from(document.querySelectorAll('.participant-cb')).map(cb => parseInt(cb.value));
+            } else {
+                this.selectedParticipants = [];
+            }
+        },
+
+        async generateCertificates() {
+            this.isGenerating = true;
+            try {
+                const response = await fetch('/api/certificates/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        event_id: this.selectedEventId,
+                        template_style: this.template,
+                        participant_ids: this.selectedParticipants.length > 0 ? this.selectedParticipants : null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Sukses: ' + result.message);
+                    this.showModal = false;
+                } else {
+                    alert('Gagal: ' + (result.message || result.error || 'Unauthorized'));
+                }
+            } catch (error) {
+                alert('Terjadi kesalahan koneksi.');
+            } finally {
+                this.isGenerating = false;
+            }
+        }
+    }" class="max-w-container-max w-full mx-auto flex flex-col gap-lg h-full pb-32 md:pb-2xl">
+    
+    <!-- Modal -->
+    <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" style="display: none;">
+        <div @click.away="showModal = false" class="bg-surface p-xl rounded-2xl shadow-xl w-full max-w-lg border border-outline-variant/30">
+            <div class="flex justify-between items-center mb-md border-b border-outline-variant/30 pb-sm">
+                <h3 class="font-headline-sm text-on-surface">Generate Settings</h3>
+                <button @click="showModal = false" class="text-on-surface-variant hover:text-on-surface">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="flex flex-col gap-md mb-xl">
+                <div>
+                    <label class="block font-label-sm text-on-surface-variant mb-xs">Select Event</label>
+                    <select x-model="selectedEventId" @change="window.location.href='/events/'+selectedEventId+'/certificates'" class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+                        @foreach($allEvents as $ev)
+                            <option value="{{ $ev->id }}">{{ $ev->title }}</option>
+                        @endforeach
+                    </select>
+                    <p class="text-[12px] text-on-surface-variant mt-1">Change event will reload the page.</p>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-xs">
+                        <label class="font-label-sm text-on-surface-variant">Select Participants</label>
+                        <label class="flex items-center gap-2 cursor-pointer text-sm">
+                            <input type="checkbox" @click="toggleSelectAll()" :checked="selectAll" class="rounded border-outline-variant text-primary focus:ring-primary">
+                            <span class="text-on-surface-variant">Select All</span>
+                        </label>
+                    </div>
+                    
+                    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg max-h-48 overflow-y-auto p-xs">
+                        @forelse($participants as $p)
+                        <label class="flex items-center gap-3 p-2 hover:bg-surface-variant rounded cursor-pointer">
+                            <input type="checkbox" x-model="selectedParticipants" value="{{ $p->id }}" class="participant-cb rounded border-outline-variant text-primary focus:ring-primary">
+                            <div>
+                                <p class="font-label-md text-on-surface">{{ $p->user->name }}</p>
+                                <p class="text-[12px] text-on-surface-variant">{{ $p->user->email }}</p>
+                            </div>
+                        </label>
+                        @empty
+                        <p class="p-sm text-on-surface-variant text-sm text-center">No attended participants found.</p>
+                        @endforelse
+                    </div>
+                    <p class="text-[12px] text-on-surface-variant mt-1">If none selected, it will generate for all attended participants.</p>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-sm">
+                <button @click="showModal = false" class="px-md py-sm rounded-lg font-label-md text-on-surface hover:bg-surface-variant transition-colors border border-outline-variant/30">Cancel</button>
+                <button @click="generateCertificates()" :disabled="isGenerating" class="bg-primary text-on-primary px-md py-sm rounded-lg font-label-md hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50">
+                    <span class="material-symbols-outlined text-[18px]" x-text="isGenerating ? 'hourglass_empty' : 'bolt'"></span>
+                    <span x-text="isGenerating ? 'Generating...' : 'Start Generate'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Page Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-xl gap-md">
         <div>
             <h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">Certificates</h2>
             <p class="font-body-base text-body-base text-on-surface-variant mt-sm">Manage, preview, and issue credentials for recent events.</p>
         </div>
-        <button class="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-lg py-md rounded-lg hover:bg-primary transition-colors flex items-center gap-sm shadow-lg shadow-primary-container/20 border border-primary-container/50">
-            <span class="material-symbols-outlined text-[18px]">magic_button</span> Generate for All
+        <button @click="showModal = true" class="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-lg py-md rounded-lg hover:bg-primary transition-colors flex items-center gap-sm shadow-lg shadow-primary-container/20 border border-primary-container/50">
+            <span class="material-symbols-outlined text-[18px]">settings</span> 
+            <span>Generate Settings</span>
         </button>
     </div>
 
     <!-- Bento Layout: Gallery & Preview -->
-    <div x-data="{ template: 'modern' }" class="grid grid-cols-1 lg:grid-cols-12 gap-lg h-full pb-2xl">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg h-full pb-2xl">
         <!-- Gallery Column -->
         <div class="col-span-1 lg:col-span-4 flex flex-col gap-md">
             <h3 class="font-headline-sm text-headline-sm text-on-surface border-b border-outline-variant/30 pb-sm mb-sm">Templates</h3>

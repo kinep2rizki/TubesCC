@@ -13,14 +13,26 @@ class ParticipantController extends Controller
         return view('Pages.ParticipantsPage', compact('event', 'participants'));
     }
 
-    public function store(Request $request, $eventId)
+    public function store(\Illuminate\Http\Request $request, $eventId)
     {
         $validated = $request->validate([
             'email' => 'required|email',
             'name' => 'required|string',
+            'status' => 'required|in:Registered,Attended',
         ]);
 
-        // Logic to register a participant to an event
+        $user = \App\Models\User::firstOrCreate(
+            ['email' => $validated['email']],
+            ['name' => $validated['name'], 'password' => \Illuminate\Support\Facades\Hash::make('password')]
+        );
+
+        EventParticipant::firstOrCreate([
+            'event_id' => $eventId,
+            'user_id' => $user->id,
+        ], [
+            'status' => $validated['status']
+        ]);
+
         return back()->with('success', 'Participant added successfully.');
     }
 

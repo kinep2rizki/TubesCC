@@ -20,8 +20,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // ==========================================
 // 2. PROTECTED ROUTES (Butuh Login)
 // ==========================================
-// Middleware di-comment sementara sampai halaman login selesai dibuat.
-Route::group([] /* ->middleware(['auth']) */, function () {
+// Middleware aktif
+Route::group(['middleware' => ['auth']], function () {
     
     // Dashboard (Overview Acara)
     Route::get('/', [EventController::class, 'index'])->name('dashboard');
@@ -37,7 +37,9 @@ Route::group([] /* ->middleware(['auth']) */, function () {
     
     // Participants & Attendance
     Route::get('/events/{eventId}/participants', [ParticipantController::class, 'index'])->name('participants');
+    Route::post('/events/{eventId}/participants', [ParticipantController::class, 'store'])->name('participants.store');
     Route::get('/events/{eventId}/attendance', [AttendanceController::class, 'index'])->name('attendance');
+    Route::post('/events/{eventId}/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     
     // Certificates
     Route::get('/events/{eventId}/certificates', [CertificateController::class, 'index'])->name('certificates');

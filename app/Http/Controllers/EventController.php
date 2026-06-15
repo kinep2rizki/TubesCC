@@ -45,17 +45,20 @@ class EventController extends Controller
         return view('Pages.EventDetail', compact('event'));
     }
 
-    public function store(Request $request)
+    public function store(\Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'community_id' => 'required|exists:communities,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'location' => 'nullable|string',
+            'description' => 'nullable|string',
         ]);
 
-        // Logic to create event
-        // Event::create($validated);
+        $validated['status'] = 'Draft';
+
+        Event::create($validated);
 
         return back()->with('success', 'Event created successfully.');
     }

@@ -3,7 +3,7 @@
 @section('title', 'Events')
 
 @section('content')
-<div class="max-w-container-max mx-auto space-y-xl pb-32 md:pb-2xl w-full">
+<div x-data="{ showCreateEventModal: false }" class="max-w-container-max mx-auto space-y-xl pb-32 md:pb-2xl w-full">
     <!-- Page Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-md">
         <div>
@@ -24,7 +24,7 @@
             </button>
             
             <!-- Primary Blue Button -->
-            <button class="flex items-center gap-xs px-md py-2 rounded-lg bg-gradient-to-r from-primary-container to-blue-600 text-white font-label-caps text-label-caps w-full sm:w-auto justify-center shadow-[0_0_15px_rgba(77,142,255,0.3)] hover:shadow-[0_0_20px_rgba(77,142,255,0.5)] transition-shadow">
+            <button @click="showCreateEventModal = true" class="flex items-center gap-xs px-md py-2 rounded-lg bg-gradient-to-r from-primary-container to-blue-600 text-white font-label-caps text-label-caps w-full sm:w-auto justify-center shadow-[0_0_15px_rgba(77,142,255,0.3)] hover:shadow-[0_0_20px_rgba(77,142,255,0.5)] transition-shadow">
                 <span class="material-symbols-outlined text-[18px]">add</span>
                 Create Event
             </button>
@@ -53,5 +53,6 @@
         </div>
         @endforelse
     </div>
+    <x-create-event-modal />
 </div>
 @endsection

@@ -133,6 +133,6 @@
 
     <!-- Modals -->
     <x-export-csv-modal />
-    <x-add-participant-modal />
+    <x-add-participant-modal :event="$event" />
 </div>
 @endsection

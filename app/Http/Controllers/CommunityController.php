@@ -22,16 +22,22 @@ class CommunityController extends Controller
         return view('Pages.Community', compact('community'));
     }
 
-    public function store(Request $request)
+    public function store(\Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
         ]);
 
-        // Logic to create community
-        // $validated['owner_id'] = auth()->id();
-        // Community::create($validated);
+        $validated['owner_id'] = \Illuminate\Support\Facades\Auth::id() ?? 1;
+
+        $community = Community::create($validated);
+        
+        // Add current user as Admin/Owner
+        $community->members()->create([
+            'user_id' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+            'role' => 'Owner'
+        ]);
 
         return back()->with('success', 'Community created successfully.');
     }

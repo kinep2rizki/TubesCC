@@ -3,11 +3,14 @@
 @section('title', 'Community Management')
 
 @section('content')
-<div x-data="{ showRoleModal: false, showGuidelinesModal: false }" class="max-w-container-max mx-auto w-full flex flex-col gap-lg">
+<div x-data="{ showRoleModal: false, showGuidelinesModal: false, showCreateCommunityModal: false }" class="max-w-container-max mx-auto w-full flex flex-col gap-lg">
     
     <!-- Page Header -->
-    <div class="mb-xl pb-sm border-b border-outline-variant/30">
+    <div class="mb-xl pb-sm border-b border-outline-variant/30 flex justify-between items-end">
         <h1 class="font-display-lg text-display-lg text-on-surface tracking-tight">Community Management</h1>
+        <button @click="showCreateCommunityModal = true" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-caps text-label-caps hover:opacity-90 transition-opacity shadow-lg flex items-center gap-xs">
+            <span class="material-symbols-outlined text-[18px]">add</span> New Community
+        </button>
     </div>
 
     <!-- Community Header Profile -->
@@ -28,7 +31,7 @@
                     </p>
                 </div>
                 <div class="flex gap-sm shrink-0">
-                    <button @click="showGuidelinesModal = true" class="bg-primary text-on-primary px-lg py-sm rounded-lg font-label-caps text-label-caps hover:opacity-90 transition-opacity">
+                    <button @click="showGuidelinesModal = true" class="bg-surface-variant text-on-surface-variant px-lg py-sm rounded-lg font-label-caps text-label-caps hover:bg-surface-variant/80 transition-colors">
                         Edit Profile
                     </button>
                 </div>
@@ -171,5 +174,6 @@
     <!-- Modals -->
     <x-role-builder-modal />
     <x-community-guidelines-modal />
+    <x-create-community-modal />
 </div>
 @endsection

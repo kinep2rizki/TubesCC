@@ -9,7 +9,13 @@ class CertificateController extends Controller
     public function index($eventId)
     {
         $event = \App\Models\Event::findOrFail($eventId);
-        return view('Pages.Certificate', compact('event'));
+        $allEvents = \App\Models\Event::all();
+        $participants = \App\Models\EventParticipant::with('user')
+            ->where('event_id', $eventId)
+            ->where('status', 'Attended')
+            ->get();
+            
+        return view('Pages.Certificate', compact('event', 'allEvents', 'participants'));
     }
 
     public function generate(Request $request, $eventId)

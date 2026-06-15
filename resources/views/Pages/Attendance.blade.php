@@ -3,24 +3,30 @@
 @section('title', 'Attendance Check-in')
 
 @section('content')
-<div class="max-w-container-max mx-auto flex flex-col gap-lg h-full pb-32 md:pb-2xl">
+<div x-data="{ showManualCheckinModal: false }" class="max-w-container-max mx-auto flex flex-col gap-lg h-full pb-32 md:pb-2xl">
     <!-- Page Header -->
-    <div class="flex justify-between items-end mb-sm">
+    <div class="flex flex-col md:flex-row justify-between md:items-end gap-4 mb-sm">
         <div>
             <h2 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">Live Check-in</h2>
             <p class="font-body-base text-body-base text-on-surface-variant mt-xs">{{ $event->title }}</p>
         </div>
         
-        <div class="flex items-center gap-sm">
-            <span class="relative flex h-3 w-3">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-            </span>
-            <span class="font-label-caps text-label-caps text-primary">SCANNER ACTIVE</span>
+        <div class="flex items-center gap-md">
+            <button @click="showManualCheckinModal = true" class="flex items-center gap-xs px-md py-2 rounded-lg border border-outline-variant/50 text-on-surface-variant hover:bg-surface-variant transition-colors font-label-caps text-label-caps">
+                <span class="material-symbols-outlined text-[18px]">person_add</span>
+                Manual Check-in
+            </button>
+            <div class="flex items-center gap-sm bg-surface-container-low px-md py-2 rounded-lg border border-outline-variant/30">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                </span>
+                <span class="font-label-caps text-label-caps text-primary">SCANNER ACTIVE</span>
+            </div>
         </div>
     </div>
-
     <!-- Main Grid: Scanner (Left) & Feed/Stats (Right) -->
+    <!-- ... (rest of the file content until the end) ... -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg h-[600px]">
         
         <!-- Left Column: QR Scanner -->
@@ -146,6 +152,6 @@
             </table>
         </div>
     </div>
-    
+    <x-manual-checkin-modal :event="$event" />
 </div>
 @endsection
