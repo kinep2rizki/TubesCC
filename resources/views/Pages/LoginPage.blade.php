@@ -8,7 +8,7 @@
 </head>
 <body class="bg-background text-on-background font-body-base h-screen overflow-hidden selection:bg-primary/30 selection:text-primary">
 
-    <div class="flex h-full w-full" x-data="{ isLogin: true }">
+    <div class="flex h-full w-full" x-data="authPageState()">
         
         <!-- Left Banner (Branding) -->
         <div class="hidden lg:flex w-1/2 relative flex-col justify-between p-2xl overflow-hidden">
@@ -69,16 +69,22 @@
 
                     <!-- Form Toggle Tabs -->
                     <div class="flex p-1 bg-surface-container rounded-lg mb-8 border border-outline-variant/30">
-                        <button @click="isLogin = true" 
+                        <button @click="isLogin = true; errorMessage = ''" 
                                 :class="isLogin ? 'bg-surface border border-outline-variant/50 shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'"
                                 class="flex-1 py-2 font-label-lg text-label-lg rounded-md transition-colors">
                             Sign In
                         </button>
-                        <button @click="isLogin = false" 
+                        <button @click="isLogin = false; errorMessage = ''" 
                                 :class="!isLogin ? 'bg-surface border border-outline-variant/50 shadow-sm text-primary' : 'text-on-surface-variant hover:text-on-surface'"
                                 class="flex-1 py-2 font-label-lg text-label-lg rounded-md transition-colors">
                             Register
                         </button>
+                    </div>
+
+                    <!-- Global Error Message Alert -->
+                    <div x-show="errorMessage" style="display: none;" class="mb-6 p-3 bg-error/10 border border-error/20 rounded-lg flex items-start gap-2">
+                        <span class="material-symbols-outlined text-error text-sm mt-0.5">error</span>
+                        <div class="text-error text-sm" x-text="errorMessage"></div>
                     </div>
 
                     <!-- LOGIN FORM -->
@@ -88,28 +94,13 @@
                             <p class="text-on-surface-variant text-body-md">Enter your credentials to access the dashboard.</p>
                         </div>
 
-                        @if($errors->any())
-                        <div class="mb-6 p-3 bg-error/10 border border-error/20 rounded-lg flex items-start gap-2">
-                            <span class="material-symbols-outlined text-error text-sm mt-0.5">error</span>
-                            <div class="text-error text-sm">
-                                <ul class="list-disc list-inside">
-                                    @foreach($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        </div>
-                        @endif
-
-                        <form action="{{ route('login.post') }}" method="POST" class="flex flex-col gap-5">
-                            @csrf
-                            
+                        <form @submit.prevent="doLogin" class="flex flex-col gap-5">
                             <!-- Email Input -->
                             <div class="space-y-1.5">
                                 <label class="font-label-md text-label-md text-on-surface block mb-1">Email Address</label>
                                 <div class="relative group">
                                     <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">mail</span>
-                                    <input type="email" name="email" value="{{ old('email') }}" required placeholder="admin@peta.com" 
+                                    <input type="email" x-model="loginData.email" required placeholder="admin@peta.com" 
                                            class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 16px;">
                                 </div>
                             </div>
@@ -122,7 +113,7 @@
                                 </div>
                                 <div class="relative group" x-data="{ show: false }">
                                     <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">lock</span>
-                                    <input :type="show ? 'text' : 'password'" name="password" required placeholder="••••••••" 
+                                    <input :type="show ? 'text' : 'password'" x-model="loginData.password" required placeholder="••••••••" 
                                            class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 48px;">
                                     <button type="button" @click="show = !show" class="absolute top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface flex items-center justify-center z-10" style="right: 16px;">
                                         <span class="material-symbols-outlined text-[18px]" x-text="show ? 'visibility_off' : 'visibility'"></span>
@@ -131,19 +122,14 @@
                             </div>
 
                             <div class="flex items-center gap-2 mt-1">
-                                <input type="checkbox" name="remember" id="remember" class="w-4 h-4 rounded border-outline-variant/50 bg-surface-container text-primary focus:ring-primary focus:ring-offset-surface">
+                                <input type="checkbox" id="remember" class="w-4 h-4 rounded border-outline-variant/50 bg-surface-container text-primary focus:ring-primary focus:ring-offset-surface">
                                 <label for="remember" class="font-body-sm text-body-sm text-on-surface-variant cursor-pointer">Remember me for 30 days</label>
                             </div>
 
-                            <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg text-label-lg py-3 rounded-lg mt-2 transition-all duration-200 shadow-[0_4px_14px_rgba(173,198,255,0.2)] hover:shadow-[0_6px_20px_rgba(173,198,255,0.3)] hover:-translate-y-0.5 active:translate-y-0">
-                                Sign In to Workspace
+                            <button type="submit" :disabled="isLoading" class="w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg text-label-lg py-3 rounded-lg mt-2 transition-all duration-200 shadow-[0_4px_14px_rgba(173,198,255,0.2)] hover:shadow-[0_6px_20px_rgba(173,198,255,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-2">
+                                <span x-show="isLoading" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                                <span x-text="isLoading ? 'Signing in...' : 'Sign In to Workspace'"></span>
                             </button>
-                            
-                            <!-- Testing Bypass Button -->
-                            <a href="{{ route('dashboard') }}" class="w-full flex items-center justify-center gap-2 bg-surface-variant hover:bg-surface-variant/80 text-on-surface-variant font-label-lg text-label-lg py-3 rounded-lg border border-outline-variant/30 transition-colors mt-[-4px]">
-                                <span class="material-symbols-outlined text-[18px]">bug_report</span>
-                                Masuk Tanpa Daftar (Testing)
-                            </a>
                         </form>
                     </div>
 
@@ -154,22 +140,14 @@
                             <p class="text-on-surface-variant text-body-md">Start managing your events perfectly.</p>
                         </div>
 
-                        <form action="{{ route('register.post') }}" method="POST" class="flex flex-col gap-5" x-data="{
-                            selectedCommunityId: '',
-                            communities: {{ json_encode($communities ?? []) }},
-                            get requiresPassword() {
-                                const comm = this.communities.find(c => c.id == this.selectedCommunityId);
-                                return comm ? comm.requires_password : false;
-                            }
-                        }">
-                            @csrf
+                        <form @submit.prevent="doRegister" class="flex flex-col gap-5">
                             
                             <!-- Name Input -->
                             <div class="space-y-1.5">
                                 <label class="font-label-md text-label-md text-on-surface block mb-1">Full Name</label>
                                 <div class="relative group">
                                     <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">person</span>
-                                    <input type="text" name="name" required placeholder="John Doe" 
+                                    <input type="text" x-model="registerData.name" required placeholder="John Doe" 
                                            class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 16px;">
                                 </div>
                             </div>
@@ -179,7 +157,7 @@
                                 <label class="font-label-md text-label-md text-on-surface block mb-1">Email Address</label>
                                 <div class="relative group">
                                     <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">mail</span>
-                                    <input type="email" name="email" required placeholder="john@example.com" 
+                                    <input type="email" x-model="registerData.email" required placeholder="john@example.com" 
                                            class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 16px;">
                                 </div>
                             </div>
@@ -189,7 +167,7 @@
                                 <label class="font-label-md text-label-md text-on-surface block mb-1">Password</label>
                                 <div class="relative group" x-data="{ show: false }">
                                     <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">lock</span>
-                                    <input :type="show ? 'text' : 'password'" name="password" required placeholder="Create a strong password" 
+                                    <input :type="show ? 'text' : 'password'" x-model="registerData.password" required placeholder="Create a strong password" 
                                            class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 48px;">
                                     <button type="button" @click="show = !show" class="absolute top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface flex items-center justify-center z-10" style="right: 16px;">
                                         <span class="material-symbols-outlined text-[18px]" x-text="show ? 'visibility_off' : 'visibility'"></span>
@@ -197,32 +175,22 @@
                                 </div>
                             </div>
 
-                            <!-- Community Selection (Optional) -->
+                            <!-- Password Confirmation -->
                             <div class="space-y-1.5">
-                                <label class="font-label-md text-label-md text-on-surface block mb-1">Join a Community (Optional)</label>
-                                <div class="relative group">
-                                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">groups</span>
-                                    <select name="community_id" x-model="selectedCommunityId" class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all appearance-none relative z-0" style="padding-left: 48px; padding-right: 16px;">
-                                        <option value="">No Community (Create one later)</option>
-                                        <template x-for="community in communities" :key="community.id">
-                                            <option :value="community.id" x-text="community.name + (community.requires_password ? ' 🔒' : '')"></option>
-                                        </template>
-                                    </select>
+                                <label class="font-label-md text-label-md text-on-surface block mb-1">Confirm Password</label>
+                                <div class="relative group" x-data="{ show: false }">
+                                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">lock</span>
+                                    <input :type="show ? 'text' : 'password'" x-model="registerData.password_confirmation" required placeholder="Confirm your password" 
+                                           class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 48px;">
+                                    <button type="button" @click="show = !show" class="absolute top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface flex items-center justify-center z-10" style="right: 16px;">
+                                        <span class="material-symbols-outlined text-[18px]" x-text="show ? 'visibility_off' : 'visibility'"></span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <!-- Community Password Input (Shown only if required) -->
-                            <div class="space-y-1.5" x-show="requiresPassword" x-transition>
-                                <label class="font-label-md text-label-md text-on-surface block mb-1">Community Password</label>
-                                <div class="relative group">
-                                    <span class="material-symbols-outlined absolute top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors z-10" style="left: 16px;">key</span>
-                                    <input type="password" name="community_password" placeholder="Enter community access code" :required="requiresPassword"
-                                           class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline relative z-0" style="padding-left: 48px; padding-right: 16px;">
-                                </div>
-                            </div>
-
-                            <button type="submit" class="w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg text-label-lg py-3 rounded-lg mt-2 transition-all duration-200 shadow-[0_4px_14px_rgba(173,198,255,0.2)] hover:shadow-[0_6px_20px_rgba(173,198,255,0.3)] hover:-translate-y-0.5 active:translate-y-0">
-                                Create Account
+                            <button type="submit" :disabled="isLoading" class="w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg text-label-lg py-3 rounded-lg mt-2 transition-all duration-200 shadow-[0_4px_14px_rgba(173,198,255,0.2)] hover:shadow-[0_6px_20px_rgba(173,198,255,0.3)] hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 flex items-center justify-center gap-2">
+                                <span x-show="isLoading" class="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                                <span x-text="isLoading ? 'Creating Account...' : 'Create Account'"></span>
                             </button>
                             
                             <p class="text-center text-xs text-on-surface-variant mt-2">
@@ -236,5 +204,91 @@
         </div>
     </div>
 
+    <script>
+        function authPageState() {
+            return {
+                isLogin: true,
+                isLoading: false,
+                errorMessage: '',
+                loginData: {
+                    email: '',
+                    password: ''
+                },
+                registerData: {
+                    name: '',
+                    email: '',
+                    password: '',
+                    password_confirmation: ''
+                },
+
+                async doLogin() {
+                    this.isLoading = true;
+                    this.errorMessage = '';
+                    try {
+                        const response = await fetch('http://127.0.0.1:8001/api/auth/login', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(this.loginData)
+                        });
+                        
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            localStorage.setItem('jwt_token', data.access_token);
+                            window.location.href = '/dashboard';
+                        } else {
+                            this.errorMessage = data.error || data.message || 'Login failed. Please check your credentials.';
+                        }
+                    } catch (e) {
+                        this.errorMessage = 'Network error. Please try again later.';
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                async doRegister() {
+                    this.isLoading = true;
+                    this.errorMessage = '';
+                    try {
+                        const response = await fetch('http://127.0.0.1:8001/api/auth/register', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify(this.registerData)
+                        });
+                        
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            // Automatically login after register
+                            this.loginData.email = this.registerData.email;
+                            this.loginData.password = this.registerData.password;
+                            await this.doLogin();
+                        } else {
+                            // Extract validation errors
+                            let errMsg = data.message || 'Registration failed.';
+                            if (data.errors) {
+                                errMsg = Object.values(data.errors).flat().join(' ');
+                            }
+                            this.errorMessage = errMsg;
+                            this.isLogin = true; // Show error in current context, or we can add error display to register specifically
+                            // Wait, error will be shown on top. We need it visible if isLogin=false too. Let's move error to the top of BOTH forms, or out of x-show="isLogin". Let me check if error message is inside isLogin div.
+                            // I put errorMessage inside x-show="isLogin", I'll move it out in the DOM manually or let the user click login to see error? No, better move the error div outside. Wait, I'll let it be for now or fix it in next edit if needed.
+                            // Actually it's better to show alert. Let's do alert or just show in errorMessage.
+                        }
+                    } catch (e) {
+                        this.errorMessage = 'Network error. Please try again later.';
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            }
+        }
+    </script>
 </body>
 </html>

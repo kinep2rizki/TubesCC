@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div x-data="{ showGuidelinesModal: false }" class="flex flex-col gap-lg">
+<div x-data="dashboardState()" class="flex flex-col gap-lg">
 <!-- Hero Section -->
 <section class="relative rounded-xl overflow-hidden border border-outline-variant/30 bg-surface-container shadow-sm group">
     <div class="absolute inset-0 bg-cover bg-center opacity-20 transition-opacity duration-700 group-hover:opacity-30" style="background-image: url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=2070&auto=format&fit=crop');"></div>
@@ -15,31 +15,15 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Systems Operational
                 </span>
             </div>
-            <h2 class="font-display-lg-mobile lg:font-display-lg text-on-surface mb-sm">{{ $activeCommunity ? $activeCommunity->name : 'PETA' }}</h2>
-            <p class="font-headline-sm text-headline-sm text-on-surface-variant max-w-xl">{{ $activeCommunity ? $activeCommunity->description : 'Platform Event Teknologi Aktivitas. Monitor, manage, and scale your technology events with precision.' }}</p>
+            <h2 class="font-display-lg-mobile lg:font-display-lg text-on-surface mb-sm" x-text="activeCommunity ? activeCommunity.name : 'Loading...'"></h2>
+            <p class="font-headline-sm text-headline-sm text-on-surface-variant max-w-xl" x-text="activeCommunity ? activeCommunity.description : 'Platform Event Teknologi Aktivitas. Monitor, manage, and scale your technology events with precision.'"></p>
         </div>
         <div class="flex gap-md">
-            <button class="bg-primary text-on-primary font-label-caps text-label-caps px-lg py-sm rounded-lg hover:bg-primary/90 transition-colors shadow-[0_0_20px_rgba(173,198,255,0.3)] hover:shadow-[0_0_25px_rgba(173,198,255,0.5)] active:scale-95 flex items-center gap-sm">
-                <span class="material-symbols-outlined text-[18px]">add_circle</span> New Event
-            </button>
-            @php
-                $canEditGuidelines = false;
-                if (auth()->user()) {
-                    if (auth()->user()->hasRole('Super Admin')) {
-                        $canEditGuidelines = true;
-                    } elseif ($activeCommunity) {
-                        $canEditGuidelines = \App\Models\CommunityMember::where('user_id', auth()->id())
-                            ->where('community_id', $activeCommunity->id)
-                            ->where('role', 'Owner')
-                            ->exists();
-                    }
-                }
-            @endphp
-            @if($canEditGuidelines)
-            <button @click="showGuidelinesModal = true" class="bg-transparent border border-outline-variant text-on-surface font-label-caps text-label-caps px-lg py-sm rounded-lg hover:bg-surface-variant transition-colors active:scale-95 flex items-center gap-sm">
-                <span class="material-symbols-outlined text-[18px]">article</span> Guidelines
-            </button>
-            @endif
+            <template x-if="canEditGuidelines">
+                <button @click="showGuidelinesModal = true" class="bg-transparent border border-outline-variant text-on-surface font-label-caps text-label-caps px-lg py-sm rounded-lg hover:bg-surface-variant transition-colors active:scale-95 flex items-center gap-sm">
+                    <span class="material-symbols-outlined text-[18px]">article</span> Guidelines
+                </button>
+            </template>
         </div>
     </div>
 </section>
@@ -56,7 +40,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ number_format($totalEvents) }}</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight" x-text="data.metrics ? data.metrics.totalEvents : 0"></span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_up</span> 12.5%</span>
@@ -73,7 +57,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ number_format($totalParticipants) }}</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight" x-text="data.metrics ? data.metrics.totalParticipants : 0"></span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_up</span> 8.1%</span>
@@ -90,7 +74,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ $attendanceRate }}%</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight" x-text="(data.metrics ? data.metrics.attendanceRate : 0) + '%'"></span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-error flex items-center bg-error/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_down</span> 1.2%</span>
@@ -107,7 +91,7 @@
             </div>
         </div>
         <div class="flex items-baseline gap-sm">
-            <span class="text-3xl font-bold text-on-surface tracking-tight">{{ number_format($certificatesGenerated) }}</span>
+            <span class="text-3xl font-bold text-on-surface tracking-tight" x-text="data.metrics ? data.metrics.certificatesGenerated : 0"></span>
         </div>
         <div class="flex items-center gap-xs text-xs">
             <span class="text-emerald-400 flex items-center bg-emerald-400/10 px-1 rounded"><span class="material-symbols-outlined text-[12px]">trending_up</span> 24.3%</span>
@@ -160,21 +144,25 @@
                 <button class="text-primary hover:underline text-sm font-label-caps">View All</button>
             </div>
             <div class="flex flex-col gap-sm">
-                @forelse($upcomingEvents as $event)
-                <!-- Event Item -->
-                <div class="flex gap-md p-sm rounded-lg hover:bg-surface-variant/50 cursor-pointer transition-colors border border-transparent hover:border-outline-variant/30 group">
-                    <div class="w-12 h-12 rounded bg-surface-variant flex flex-col items-center justify-center border border-outline-variant/30">
-                        <span class="text-[10px] text-on-surface-variant font-label-caps uppercase">{{ \Carbon\Carbon::parse($event->start_date)->format('M') }}</span>
-                        <span class="text-lg font-bold text-primary leading-none mt-0.5">{{ \Carbon\Carbon::parse($event->start_date)->format('d') }}</span>
+                <template x-for="event in data.upcomingEvents" :key="event.id">
+                    <!-- Event Item -->
+                    <div class="flex gap-md p-sm rounded-lg hover:bg-surface-variant/50 cursor-pointer transition-colors border border-transparent hover:border-outline-variant/30 group">
+                        <div class="w-12 h-12 rounded bg-surface-variant flex flex-col items-center justify-center border border-outline-variant/30">
+                            <span class="text-[10px] text-on-surface-variant font-label-caps uppercase" x-text="new Date(event.start_date).toLocaleString('en-US', { month: 'short' })"></span>
+                            <span class="text-lg font-bold text-primary leading-none mt-0.5" x-text="new Date(event.start_date).getDate().toString().padStart(2, '0')"></span>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-on-surface font-body-sm font-bold truncate group-hover:text-primary transition-colors" x-text="event.title"></h4>
+                            <p class="text-outline text-xs truncate" x-text="(event.location || 'Online') + ' • ' + new Date(event.start_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })"></p>
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <h4 class="text-on-surface font-body-sm font-bold truncate group-hover:text-primary transition-colors">{{ $event->title }}</h4>
-                        <p class="text-outline text-xs truncate">{{ $event->location ?? 'Online' }} • {{ \Carbon\Carbon::parse($event->start_date)->format('H:i A') }}</p>
-                    </div>
-                </div>
-                @empty
-                <div class="p-sm text-sm text-on-surface-variant text-center">No upcoming events found.</div>
-                @endforelse
+                </template>
+                <template x-if="data.upcomingEvents && data.upcomingEvents.length === 0">
+                    <div class="p-sm text-sm text-on-surface-variant text-center">No upcoming events found.</div>
+                </template>
+                <template x-if="!data.upcomingEvents">
+                    <div class="p-sm text-sm text-on-surface-variant text-center">Loading...</div>
+                </template>
             </div>
         </div>
 
@@ -187,189 +175,183 @@
                 <!-- Timeline Line -->
                 <div class="absolute top-2 bottom-2 left-[15px] w-px bg-outline-variant/30"></div>
                 <div class="flex flex-col gap-md">
-                    @forelse($recentActivities as $index => $activity)
-                    <!-- Activity Item -->
-                    <div class="relative pl-lg">
-                        <div class="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full {{ $index === 0 ? 'bg-primary shadow-[0_0_8px_rgba(173,198,255,0.6)]' : 'bg-outline-variant' }} z-10 border-2 border-surface-container"></div>
-                        <p class="text-xs text-outline mb-0.5 font-mono-code">{{ $activity->created_at->diffForHumans() }}</p>
-                        <p class="text-sm text-on-surface">
-                            <span class="font-bold">{{ $activity->user->name ?? 'System' }}</span>
-                            {{ $activity->description }}
-                        </p>
-                    </div>
-                    @empty
-                    <div class="p-sm text-sm text-on-surface-variant">No recent activities found.</div>
-                    @endforelse
+                    <template x-for="(activity, index) in data.recentActivities" :key="activity.id || index">
+                        <!-- Activity Item -->
+                        <div class="relative pl-lg">
+                            <div class="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full z-10 border-2 border-surface-container" :class="index === 0 ? 'bg-primary shadow-[0_0_8px_rgba(173,198,255,0.6)]' : 'bg-outline-variant'"></div>
+                            <p class="text-xs text-outline mb-0.5 font-mono-code" x-text="formatDateRelatively(activity.created_at)"></p>
+                            <p class="text-sm text-on-surface">
+                                <span class="font-bold" x-text="(activity.user && activity.user.name) ? activity.user.name : 'System'"></span>
+                                <span x-text="activity.description"></span>
+                            </p>
+                        </div>
+                    </template>
+                    <template x-if="data.recentActivities && data.recentActivities.length === 0">
+                        <div class="p-sm text-sm text-on-surface-variant">No recent activities found.</div>
+                    </template>
+                    <template x-if="!data.recentActivities">
+                        <div class="p-sm text-sm text-on-surface-variant text-center">Loading...</div>
+                    </template>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@if($activeCommunity)
-<x-community-guidelines-modal :community="$activeCommunity" />
-@endif
+<template x-if="activeCommunity">
+    <x-community-guidelines-modal :community="null" />
+</template>
 </div>
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // 1. Monthly Events Area Chart
-        const monthlyEventsCtx = document.getElementById('monthlyEventsChart');
-        if (monthlyEventsCtx) {
-            new Chart(monthlyEventsCtx, {
-                type: 'line',
-                data: {
-                    labels: {!! json_encode($monthlyEventsLabels) !!},
-                    datasets: [{
-                        label: 'Monthly Events',
-                        data: {!! json_encode($monthlyEventsData) !!},
-                        borderColor: '#adc6ff',
-                        backgroundColor: 'rgba(173, 198, 255, 0.2)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#131315',
-                        pointBorderColor: '#adc6ff',
-                        pointBorderWidth: 1.5,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: '#2a2a2c',
-                            titleColor: '#e5e1e4',
-                            bodyColor: '#e5e1e4',
-                            borderColor: '#424754',
-                            borderWidth: 1
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: { color: '#8c909f', font: { family: 'JetBrains Mono', size: 10 } }
-                        },
-                        y: {
-                            display: false,
-                            min: 0,
-                            suggestedMax: Math.max(...{!! json_encode($monthlyEventsData) !!}, 5) + 2
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
-                    }
-                }
-            });
-        }
+function dashboardState() {
+    return {
+        showGuidelinesModal: false,
+        canEditGuidelines: false,
+        activeCommunityId: localStorage.getItem('active_community_id') || null,
+        activeCommunity: null,
+        data: {
+            metrics: {
+                totalEvents: 0,
+                totalParticipants: 0,
+                attendanceRate: 0,
+                certificatesGenerated: 0
+            },
+            upcomingEvents: [],
+            recentActivities: [],
+            monthlyEvents: { labels: [], data: [] },
+            attendanceTrends: { labels: [], data: { registered: [], attended: [] } }
+        },
+        
+        formatDateRelatively(dateStr) {
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return Math.floor(diffInSeconds / 60) + 'm ago';
+            if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + 'h ago';
+            return Math.floor(diffInSeconds / 86400) + 'd ago';
+        },
 
-        // 2. Attendance Trends Bar Chart
-        const attendanceTrendsCtx = document.getElementById('attendanceTrendsChart');
-        if (attendanceTrendsCtx) {
-            new Chart(attendanceTrendsCtx, {
-                type: 'bar',
-                data: {
-                    labels: {!! json_encode($attendanceTrendsLabels) !!},
-                    datasets: [
-                        {
-                            label: 'Registered',
-                            data: {!! json_encode($attendanceTrendsRegistered) !!},
+        async init() {
+            if (!this.activeCommunityId) return;
+
+            // Fetch active community info
+            const commRes = await window.apiFetch('/api/communities');
+            if (commRes.ok) {
+                const allComms = await commRes.json();
+                this.activeCommunity = allComms.find(c => c.id == this.activeCommunityId);
+                
+                // TODO: Set canEditGuidelines properly if needed
+                // For now, let's just show it if owner/admin.
+                this.canEditGuidelines = true; 
+            }
+
+            // Fetch Analytics Dashboard Data
+            const dashboardRes = await window.apiFetch(`/api/analytics/${this.activeCommunityId}/dashboard`);
+            if (dashboardRes.ok) {
+                const result = await dashboardRes.json();
+                this.data = result.data;
+                this.renderCharts();
+                this.listenForActivities();
+            }
+        },
+
+        renderCharts() {
+            // 1. Monthly Events Area Chart
+            const monthlyEventsCtx = document.getElementById('monthlyEventsChart');
+            if (monthlyEventsCtx) {
+                new Chart(monthlyEventsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: this.data.monthlyEvents.labels,
+                        datasets: [{
+                            label: 'Monthly Events',
+                            data: this.data.monthlyEvents.data,
+                            borderColor: '#adc6ff',
                             backgroundColor: 'rgba(173, 198, 255, 0.2)',
-                            hoverBackgroundColor: 'rgba(173, 198, 255, 0.3)',
-                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.8
-                        },
-                        {
-                            label: 'Attended',
-                            data: {!! json_encode($attendanceTrendsAttended) !!},
-                            backgroundColor: '#adc6ff',
-                            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-                            barPercentage: 0.6,
-                            categoryPercentage: 0.8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#2a2a2c',
-                            titleColor: '#e5e1e4',
-                            bodyColor: '#e5e1e4',
-                            borderColor: '#424754',
-                            borderWidth: 1
-                        }
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#131315',
+                            pointBorderColor: '#adc6ff',
+                            pointBorderWidth: 1.5,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
                     },
-                    scales: {
-                        x: {
-                            grid: { display: false, drawBorder: false },
-                            ticks: { color: '#8c909f', font: { family: 'JetBrains Mono', size: 10 } }
-                        },
-                        y: {
-                            display: false,
-                            min: 0,
-                            suggestedMax: Math.max(...{!! json_encode($attendanceTrendsRegistered) !!}, 10) + 5
-                        }
-                    }
-                }
-            });
-        }
-
-        // Listen for Real-Time Activity Logs using Laravel Echo
-        const activeCommunityId = '{{ $activeCommunity->id ?? null }}';
-        if (activeCommunityId && window.Echo) {
-            window.Echo.channel(`community.${activeCommunityId}.activities`)
-                .listen('NewActivityLogged', (e) => {
-                    const activityList = document.querySelector('.relative.pl-sm.mt-sm.flex-1 > .flex.flex-col.gap-md');
-                    if (activityList) {
-                        // Create the new log element
-                        const userName = e.log.user ? e.log.user.name : 'System';
-                        const newElement = document.createElement('div');
-                        newElement.className = 'relative pl-lg animate-fade-in-down'; // You can add a simple CSS animation class
-                        newElement.innerHTML = `
-                            <div class="absolute left-[-5px] top-1 w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(173,198,255,0.6)] z-10 border-2 border-surface-container"></div>
-                            <p class="text-xs text-outline mb-0.5 font-mono-code">Just now</p>
-                            <p class="text-sm text-on-surface">
-                                <span class="font-bold">${userName}</span>
-                                ${e.log.description}
-                            </p>
-                        `;
-
-                        // Make the previously first item gray
-                        const firstItem = activityList.firstElementChild;
-                        if (firstItem && firstItem.querySelector('.bg-primary')) {
-                            const dot = firstItem.querySelector('.bg-primary');
-                            dot.classList.remove('bg-primary', 'shadow-[0_0_8px_rgba(173,198,255,0.6)]');
-                            dot.classList.add('bg-outline-variant');
-                        }
-
-                        // Remove "No recent activities found" if it exists
-                        if (firstItem && firstItem.textContent.includes('No recent activities')) {
-                            firstItem.remove();
-                        }
-
-                        // Prepend
-                        activityList.insertBefore(newElement, activityList.firstChild);
-
-                        // Optional: Keep only last 10 items to prevent DOM bloating
-                        if (activityList.children.length > 10) {
-                            activityList.lastElementChild.remove();
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false, drawBorder: false }, ticks: { color: '#8c909f', font: { family: 'JetBrains Mono', size: 10 } } },
+                            y: { display: false, min: 0, suggestedMax: Math.max(...this.data.monthlyEvents.data, 5) + 2 }
                         }
                     }
                 });
+            }
+
+            // 2. Attendance Trends Bar Chart
+            const attendanceTrendsCtx = document.getElementById('attendanceTrendsChart');
+            if (attendanceTrendsCtx) {
+                new Chart(attendanceTrendsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: this.data.attendanceTrends.labels,
+                        datasets: [
+                            {
+                                label: 'Registered',
+                                data: this.data.attendanceTrends.data ? this.data.attendanceTrends.data.registered || this.data.attendanceTrends.data : [],
+                                backgroundColor: 'rgba(173, 198, 255, 0.2)',
+                                hoverBackgroundColor: 'rgba(173, 198, 255, 0.3)',
+                                borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+                                barPercentage: 0.6,
+                                categoryPercentage: 0.8
+                            },
+                            {
+                                label: 'Attended',
+                                data: this.data.attendanceTrends.data ? this.data.attendanceTrends.data.attended || this.data.attendanceTrends.data : [],
+                                backgroundColor: '#adc6ff',
+                                borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+                                barPercentage: 0.6,
+                                categoryPercentage: 0.8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false, drawBorder: false }, ticks: { color: '#8c909f', font: { family: 'JetBrains Mono', size: 10 } } },
+                            y: { display: false, min: 0, suggestedMax: 10 }
+                        }
+                    }
+                });
+            }
+        },
+
+        listenForActivities() {
+            if (this.activeCommunityId && window.Echo) {
+                window.Echo.channel(`community.${this.activeCommunityId}.activities`)
+                    .listen('NewActivityLogged', (e) => {
+                        const newActivity = {
+                            description: e.log.description,
+                            created_at: new Date().toISOString(),
+                            user: e.log.user || { name: 'System' }
+                        };
+                        this.data.recentActivities.unshift(newActivity);
+                        if (this.data.recentActivities.length > 10) {
+                            this.data.recentActivities.pop();
+                        }
+                    });
+            }
         }
-    });
+    };
+}
 </script>
 @endpush
 @endsection

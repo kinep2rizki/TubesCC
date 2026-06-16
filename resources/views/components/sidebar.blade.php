@@ -87,13 +87,7 @@
             <span class="font-label-caps text-label-caps">Settings</span>
         </a>
     </div>
-    <!-- Footer Tabs -->
-    <div class="border-t border-outline-variant/30 pt-sm mt-sm flex flex-col gap-xs">
-        <a class="flex items-center gap-md text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-white/5 transition-all duration-200 active:translate-x-1 rounded-lg" href="#">
-            <span class="material-symbols-outlined">help</span>
-            <span class="font-label-caps text-label-caps">Support</span>
-        </a>
-    </div>
+
 </nav>
 
 <!-- Backdrop for mobile sidebar -->

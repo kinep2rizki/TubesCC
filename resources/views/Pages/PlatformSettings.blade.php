@@ -3,7 +3,7 @@
 @section('title', 'Settings')
 
 @section('content')
-<div class="max-w-container-max mx-auto w-full">
+<div x-data="settingsState()" x-init="initData()" class="max-w-container-max mx-auto w-full">
     <!-- Page Header -->
     <header class="mb-xl">
         <h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">Settings</h1>
@@ -16,9 +16,7 @@
         <nav class="w-full md:w-56 flex-shrink-0 sticky top-xl flex flex-row md:flex-col gap-xs overflow-x-auto md:overflow-visible pb-md md:pb-0 border-b md:border-b-0 border-outline-variant/30 z-10 bg-background/95 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
             <a class="px-md py-sm text-on-surface font-body-sm font-semibold bg-surface-container-high/50 rounded-lg whitespace-nowrap transition-colors" href="#profile">Profile</a>
             <a class="px-md py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg font-body-sm transition-colors whitespace-nowrap" href="#security">Security</a>
-            <a class="px-md py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg font-body-sm transition-colors whitespace-nowrap" href="#notifications">Notifications</a>
             <a class="px-md py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg font-body-sm transition-colors whitespace-nowrap" href="#certificates">My Certificates</a>
-            <a class="px-md py-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low rounded-lg font-body-sm transition-colors whitespace-nowrap" href="#api">API Keys</a>
         </nav>
         
         <!-- Settings Forms Area -->
@@ -33,32 +31,33 @@
                     <!-- Avatar Upload -->
                     <div class="flex items-center gap-lg">
                         <div class="relative w-20 h-20 rounded-full border border-outline-variant overflow-hidden bg-surface-container-highest flex-shrink-0">
-                            <img alt="User Avatar" class="w-full h-full object-cover" data-alt="A high-quality, professional headshot of a young professional in a modern, well-lit indoor environment. The lighting is bright and clear, casting soft shadows. The overall tone is approachable and clean, fitting a sleek, modern tech platform's user profile image. Background is subtly blurred." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc10OtlWIDhhtO4qDUkrajM2cug2WxrM_awC8K0IU6OSHycn3xd2C2makL_mv3vtY9JZ4nOy0nj79zNMLpBEdkVglXwJ7heEv1IPp16tyRn9ew-1CopH_kLb6fdk3EY6NREJ0_NlLOwyJw5RajD0zsKo1xxGJEdVS9kl-cRrAyEEfQbRry3EivVxc7-VmhBF6OVSR670oWotq5ie6FcfwKT-iPzAkJul5jKkrUAkZs2CF08qJ7Q09qV_MA1W6zAlMBOqWPMBLuCCSU"/>
+                            <img alt="User Avatar" class="w-full h-full object-cover" :src="profile.avatar_url"/>
                         </div>
                         <div class="flex gap-sm">
-                            <button class="bg-surface-bright text-on-surface border border-outline-variant px-md py-sm rounded-lg font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors">Change</button>
-                            <button class="text-error px-md py-sm rounded-lg font-label-caps text-label-caps hover:bg-error-container/10 transition-colors">Remove</button>
+                            <label class="bg-surface-bright text-on-surface border border-outline-variant px-md py-sm rounded-lg font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors cursor-pointer inline-flex items-center">
+                                Change
+                                <input type="file" class="hidden" accept="image/*" @change="handleAvatarChange" />
+                            </label>
                         </div>
                     </div>
                     <!-- Name Field -->
                     <div class="space-y-sm">
                         <label class="block font-label-caps text-label-caps text-on-surface-variant" for="fullName">Full Name</label>
-                        <input class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder-on-surface-variant/50" id="fullName" type="text" value="Alex Mercer"/>
+                        <input x-model="profile.name" class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder-on-surface-variant/50" id="fullName" type="text"/>
                     </div>
                     <!-- Email Field -->
                     <div class="space-y-sm">
                         <label class="block font-label-caps text-label-caps text-on-surface-variant" for="emailAddr">Email Address</label>
-                        <input class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder-on-surface-variant/50" id="emailAddr" type="email" value="alex.mercer@example.com"/>
+                        <input x-model="profile.email" disabled class="w-full bg-surface-container border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface/70 outline-none cursor-not-allowed" id="emailAddr" type="email"/>
                     </div>
                     <!-- Bio Field -->
                     <div class="space-y-sm">
                         <label class="block font-label-caps text-label-caps text-on-surface-variant" for="bioText">Bio</label>
-                        <textarea class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder-on-surface-variant/50 resize-y" id="bioText" rows="3">Senior Platform Engineer specializing in high-throughput event systems.</textarea>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant/70 text-right">0 / 160</p>
+                        <textarea x-model="profile.bio" class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder-on-surface-variant/50 resize-y" id="bioText" rows="3"></textarea>
                     </div>
                 </div>
                 <div class="px-lg py-md border-t border-outline-variant/30 bg-surface-container-lowest/50 flex justify-end">
-                    <button class="bg-primary-container text-on-primary-container px-lg py-sm rounded-lg font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors shadow-sm">Save Changes</button>
+                    <button @click="saveProfile()" :disabled="isSavingProfile" class="bg-primary-container text-on-primary-container px-lg py-sm rounded-lg font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors shadow-sm disabled:opacity-50" x-text="isSavingProfile ? 'Saving...' : 'Save Changes'"></button>
                 </div>
             </section>
             
@@ -75,15 +74,19 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-md">
                             <div class="space-y-sm">
                                 <label class="block font-label-caps text-label-caps text-on-surface-variant" for="currentPass">Current Password</label>
-                                <input class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" id="currentPass" placeholder="••••••••" type="password"/>
+                                <input x-model="password.current_password" class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" id="currentPass" placeholder="••••••••" type="password"/>
                             </div>
                             <div class="space-y-sm">
                                 <label class="block font-label-caps text-label-caps text-on-surface-variant" for="newPass">New Password</label>
-                                <input class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" id="newPass" placeholder="••••••••" type="password"/>
+                                <input x-model="password.new_password" class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" id="newPass" placeholder="••••••••" type="password"/>
+                            </div>
+                            <div class="space-y-sm md:col-span-2">
+                                <label class="block font-label-caps text-label-caps text-on-surface-variant" for="newPassConfirm">Confirm Password</label>
+                                <input x-model="password.new_password_confirmation" class="w-full bg-background border border-outline-variant rounded-lg px-md py-sm text-body-base font-body-base text-on-surface focus:border-primary-container focus:ring-1 focus:ring-primary-container outline-none transition-all" id="newPassConfirm" placeholder="••••••••" type="password"/>
                             </div>
                         </div>
                         <div class="flex justify-end">
-                            <button class="bg-surface-bright text-on-surface border border-outline-variant px-md py-sm rounded-lg font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors">Update Password</button>
+                            <button @click="updatePassword()" :disabled="isSavingPassword" class="bg-surface-bright text-on-surface border border-outline-variant px-md py-sm rounded-lg font-label-caps text-label-caps hover:bg-surface-container-highest transition-colors disabled:opacity-50" x-text="isSavingPassword ? 'Updating...' : 'Update Password'"></button>
                         </div>
                     </div>
                     <hr class="border-outline-variant/30"/>
@@ -101,17 +104,6 @@
                 </div>
             </section>
             
-            <!-- Notifications Placeholder -->
-            <section class="bg-surface rounded-xl border border-outline-variant shadow-sm overflow-hidden scroll-mt-2xl" id="notifications">
-                <div class="px-lg py-md border-b border-outline-variant/30 bg-surface-container-lowest/50">
-                    <h2 class="font-headline-sm text-headline-sm text-on-surface">Notifications</h2>
-                    <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Configure how you receive alerts and updates.</p>
-                </div>
-                <div class="p-lg">
-                    <p class="text-on-surface-variant text-body-sm">Notification settings coming soon.</p>
-                </div>
-            </section>
-
             <!-- Certificates Section -->
             <section class="bg-surface rounded-xl border border-outline-variant shadow-sm overflow-hidden scroll-mt-2xl" id="certificates">
                 <div class="px-lg py-md border-b border-outline-variant/30 bg-surface-container-lowest/50">
@@ -148,72 +140,114 @@
                 </div>
             </section>
 
-            <!-- API Section -->
-            <section class="bg-surface rounded-xl border border-outline-variant shadow-sm overflow-hidden scroll-mt-2xl" id="api">
-                <div class="px-lg py-md border-b border-outline-variant/30 bg-surface-container-lowest/50 flex justify-between items-center">
-                    <div>
-                        <h2 class="font-headline-sm text-headline-sm text-on-surface">API Keys</h2>
-                        <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Manage your development and production API keys.</p>
-                    </div>
-                    <button class="bg-primary-container text-on-primary-container px-md py-sm rounded-lg font-label-caps text-label-caps hover:bg-primary-container/90 transition-colors shadow-sm flex items-center gap-xs">
-                        <span class="material-symbols-outlined text-[16px]">add</span> Create Key
-                    </button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-outline-variant/30 bg-surface-container-low/30">
-                                <th class="px-lg py-sm font-label-caps text-label-caps text-on-surface-variant font-medium">Name</th>
-                                <th class="px-lg py-sm font-label-caps text-label-caps text-on-surface-variant font-medium">Key</th>
-                                <th class="px-lg py-sm font-label-caps text-label-caps text-on-surface-variant font-medium text-right">Created</th>
-                                <th class="px-lg py-sm w-12"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="font-mono-code text-mono-code text-on-surface divide-y divide-outline-variant/30">
-                            <tr class="hover:bg-white/[0.02] transition-colors group">
-                                <td class="px-lg py-md font-body-sm text-on-surface">Production Main</td>
-                                <td class="px-lg py-md">
-                                    <div class="flex items-center gap-sm">
-                                        <span class="text-on-surface-variant truncate w-48">sk_live_9f8d...a1b2</span>
-                                        <button class="text-on-surface-variant hover:text-primary-container opacity-0 group-hover:opacity-100 transition-opacity" title="Copy to clipboard">
-                                            <span class="material-symbols-outlined text-[16px]">content_copy</span>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td class="px-lg py-md font-body-sm text-on-surface-variant text-right">Oct 12, 2023</td>
-                                <td class="px-lg py-md text-right">
-                                    <button class="text-on-surface-variant hover:text-error transition-colors">
-                                        <span class="material-symbols-outlined text-[20px]">delete</span>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr class="hover:bg-white/[0.02] transition-colors group">
-                                <td class="px-lg py-md font-body-sm text-on-surface">Development Sandbox</td>
-                                <td class="px-lg py-md">
-                                    <div class="flex items-center gap-sm">
-                                        <span class="text-on-surface-variant truncate w-48">sk_test_4c3b...e9f0</span>
-                                        <button class="text-on-surface-variant hover:text-primary-container opacity-0 group-hover:opacity-100 transition-opacity" title="Copy to clipboard">
-                                            <span class="material-symbols-outlined text-[16px]">content_copy</span>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td class="px-lg py-md font-body-sm text-on-surface-variant text-right">Jan 05, 2024</td>
-                                <td class="px-lg py-md text-right">
-                                    <button class="text-on-surface-variant hover:text-error transition-colors">
-                                        <span class="material-symbols-outlined text-[20px]">delete</span>
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
         </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
+<script>
+    function settingsState() {
+        return {
+            profile: {
+                name: '',
+                email: '',
+                bio: '',
+                avatar_url: 'https://ui-avatars.com/api/?name=User&background=random',
+                avatarFile: null
+            },
+            password: {
+                current_password: '',
+                new_password: '',
+                new_password_confirmation: ''
+            },
+            isSavingProfile: false,
+            isSavingPassword: false,
+            
+            initData() {
+                this.fetchProfile();
+            },
+            
+            async fetchProfile() {
+                try {
+                    const res = await window.apiFetch('/api/auth/me');
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.profile.name = data.name || '';
+                        this.profile.email = data.email || '';
+                        this.profile.bio = data.bio || '';
+                        if (data.avatar_url) {
+                            this.profile.avatar_url = data.avatar_url;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Fetch profile error:', e);
+                }
+            },
+            
+            handleAvatarChange(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.profile.avatarFile = file;
+                    this.profile.avatar_url = URL.createObjectURL(file);
+                }
+            },
+            
+            async saveProfile() {
+                this.isSavingProfile = true;
+                try {
+                    const formData = new FormData();
+                    formData.append('name', this.profile.name);
+                    formData.append('bio', this.profile.bio);
+                    if (this.profile.avatarFile) {
+                        formData.append('avatar', this.profile.avatarFile);
+                    }
+                    
+                    const res = await window.apiFetch('/api/auth/profile', 'POST', formData);
+                    if (res.ok) {
+                        alert('Profile updated successfully!');
+                        this.fetchProfile(); // reload
+                    } else {
+                        const err = await res.json();
+                        alert('Error: ' + JSON.stringify(err));
+                    }
+                } catch (e) {
+                    alert('Network error');
+                } finally {
+                    this.isSavingProfile = false;
+                }
+            },
+            
+            async updatePassword() {
+                if (this.password.new_password !== this.password.new_password_confirmation) {
+                    alert('New password confirmation does not match');
+                    return;
+                }
+                
+                this.isSavingPassword = true;
+                try {
+                    const payload = {
+                        current_password: this.password.current_password,
+                        new_password: this.password.new_password,
+                        new_password_confirmation: this.password.new_password_confirmation
+                    };
+                    const res = await window.apiFetch('/api/auth/profile/password', 'PUT', payload);
+                    if (res.ok) {
+                        alert('Password updated successfully!');
+                        this.password = { current_password: '', new_password: '', new_password_confirmation: '' };
+                    } else {
+                        const err = await res.json();
+                        alert('Error: ' + JSON.stringify(err));
+                    }
+                } catch (e) {
+                    alert('Network error');
+                } finally {
+                    this.isSavingPassword = false;
+                }
+            }
+        };
+    }
+</script>
 <script>
     // Simple script to handle sub-nav highlighting based on scroll position
     // This adds that extra "Stripe-style" polish

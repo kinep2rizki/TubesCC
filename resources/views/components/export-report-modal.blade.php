@@ -2,7 +2,7 @@
     <div x-show="showExportModal" x-transition.opacity class="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity" @click="showExportModal = false"></div>
 
     <div x-show="showExportModal" x-transition.scale.origin.bottom class="relative transform overflow-hidden rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg z-10">
-        <form action="{{ route('analytics.export') }}" method="GET" target="_blank">
+        <form @submit.prevent="exportReport($event)">
         <div class="px-lg py-md border-b border-outline-variant/20 flex justify-between items-center bg-surface-container/50">
             <div class="flex items-center gap-sm">
                 <span class="material-symbols-outlined text-primary">download</span>
@@ -60,8 +60,9 @@
 
         <div class="px-lg py-md border-t border-outline-variant/20 flex justify-end gap-sm bg-surface-container-lowest/80">
             <button @click="showExportModal = false" type="button" class="px-4 py-2 rounded-lg border border-outline-variant/50 text-on-surface font-body-sm hover:bg-surface-variant/50 transition-colors">Cancel</button>
-            <button @click="setTimeout(() => showExportModal = false, 100)" type="submit" class="flex items-center gap-xs px-4 py-2 rounded-lg bg-primary text-on-primary font-body-sm hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-[0_0_15px_rgba(77,142,255,0.2)]">
-                <span class="material-symbols-outlined text-[18px]">download</span> Download Report
+            <button :disabled="isExporting" type="submit" class="flex items-center gap-xs px-4 py-2 rounded-lg bg-primary text-on-primary font-body-sm hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-[0_0_15px_rgba(77,142,255,0.2)] disabled:opacity-50">
+                <span class="material-symbols-outlined text-[18px]" x-text="isExporting ? 'hourglass_empty' : 'download'"></span> 
+                <span x-text="isExporting ? 'Exporting...' : 'Download Report'"></span>
             </button>
         </div>
         </form>

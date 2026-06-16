@@ -28,10 +28,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/', [EventController::class, 'index'])->name('dashboard');
     
     // Communities Management
-    Route::get('/switch-community/{id}', [CommunityController::class, 'switch'])->name('communities.switch');
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities');
-    Route::post('/communities', [CommunityController::class, 'store'])->name('communities.store');
-    Route::put('/communities/{id}', [CommunityController::class, 'update'])->name('communities.update');
     
     // User Management
     Route::get('/users', [\App\Http\Controllers\UserController::class, 'index'])->name('users');

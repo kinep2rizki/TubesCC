@@ -24,26 +24,17 @@
         async generateCertificates() {
             this.isGenerating = true;
             try {
-                const response = await fetch('/api/certificates/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        event_id: this.selectedEventId,
-                        template_style: this.template,
-                        participant_ids: this.selectedParticipants.length > 0 ? this.selectedParticipants : null
-                    })
+                const result = await fetchApi('/api/certificates/generate', 'POST', {
+                    event_id: this.selectedEventId,
+                    template_style: this.template,
+                    participant_ids: this.selectedParticipants.length > 0 ? this.selectedParticipants : null
                 });
                 
-                const result = await response.json();
-                
-                if (response.ok) {
+                if (result.success) {
                     alert('Sukses: ' + result.message);
                     this.showModal = false;
                 } else {
-                    alert('Gagal: ' + (result.message || result.error || 'Unauthorized'));
+                    alert('Gagal: ' + (result.message || 'Unauthorized'));
                 }
             } catch (error) {
                 alert('Terjadi kesalahan koneksi.');

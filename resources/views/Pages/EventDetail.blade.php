@@ -3,8 +3,8 @@
 @section('title', 'Event Detail')
 
 @section('content')
-<div x-data="{ showEditEventModal: false }" class="max-w-container-max mx-auto w-full flex flex-col gap-lg">
-    <x-event-header :event="$event" activeTab="overview" />
+<div x-data="eventDetailState({{ $id }})" class="max-w-container-max mx-auto w-full flex flex-col gap-lg">
+    <x-event-header activeTab="overview" />
     
     <!-- Bento Grid Content -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-md">
@@ -17,19 +17,19 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-md mb-lg relative z-10">
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Total Capacity</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold">{{ $event->capacity ?? 500 }}</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold" x-text="event ? event.capacity : 0"></span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Registered</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary font-bold">{{ $registeredCount }}</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary font-bold" x-text="stats.registered"></span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Waitlisted</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-secondary font-bold">{{ $waitlistedCount }}</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-secondary font-bold" x-text="stats.waitlisted"></span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Conversion Rate</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-tertiary font-bold">{{ $conversionRate }}%</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-tertiary font-bold" x-text="stats.conversionRate + '%'"></span>
                 </div>
             </div>
             <!-- Line Chart -->
@@ -80,10 +80,10 @@
                 <h4 class="font-body-base text-body-base font-semibold text-on-surface mb-sm">Demographics</h4>
                 <div class="flex-1 flex items-center justify-center relative my-sm">
                     <!-- CSS simulated donut chart -->
-                    <div class="w-32 h-32 rounded-full relative flex items-center justify-center" style="background: conic-gradient(theme('colors.emerald.500') 0% {{ $attendedPct }}%, theme('colors.amber.500') {{ $attendedPct }}% {{ $attendedPct + $registeredPct }}%, theme('colors.gray.500') {{ $attendedPct + $registeredPct }}% 100%);">
+                    <div class="w-32 h-32 rounded-full relative flex items-center justify-center" :style="`background: conic-gradient(theme('colors.emerald.500') 0% ${demographics.attendedPct}%, theme('colors.amber.500') ${demographics.attendedPct}% ${demographics.attendedPct + demographics.registeredPct}%, theme('colors.gray.500') ${demographics.attendedPct + demographics.registeredPct}% 100%);`">
                         <div class="w-24 h-24 bg-surface-container-low rounded-full flex flex-col items-center justify-center z-10">
-                            <span class="font-body-sm text-body-sm text-on-surface-variant text-center leading-tight">Top Group<br>{{ $topGroupName }}</span>
-                            <span class="font-headline-sm text-headline-sm text-primary font-bold">{{ $topGroupPct }}%</span>
+                            <span class="font-body-sm text-body-sm text-on-surface-variant text-center leading-tight">Top Group<br><span x-text="demographics.topGroupName"></span></span>
+                            <span class="font-headline-sm text-headline-sm text-primary font-bold" x-text="demographics.topGroupPct + '%'"></span>
                         </div>
                     </div>
                 </div>
@@ -113,21 +113,24 @@
                     </tr>
                 </thead>
                 <tbody class="text-body-sm font-body-sm">
-                    @forelse($recentParticipants as $participant)
-                    <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/30 transition-colors">
-                        <td class="p-sm md:p-md text-on-surface flex items-center gap-sm">
-                            <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs">{{ substr($participant->user->name ?? 'U', 0, 2) }}</div>
-                            {{ $participant->user->name ?? 'Unknown' }}
-                        </td>
-                        <td class="p-sm md:p-md text-on-surface-variant">{{ $participant->user->email ?? 'N/A' }}</td>
-                        <td class="p-sm md:p-md"><span class="px-2 py-1 rounded bg-surface-container-highest text-on-surface-variant text-xs border border-outline-variant/30">Standard</span></td>
-                        <td class="p-sm md:p-md text-right">
-                            <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium {{ $participant->status == 'Attended' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20' }}">{{ $participant->status }}</span>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="4" class="text-center p-md text-on-surface-variant border-b border-outline-variant/20">No participants yet.</td></tr>
-                    @endforelse
+                    <template x-for="participant in recentParticipants" :key="participant.id">
+                        <tr class="border-b border-outline-variant/20 hover:bg-surface-variant/30 transition-colors">
+                            <td class="p-sm md:p-md text-on-surface flex items-center gap-sm">
+                                <div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant font-medium text-xs" x-text="participant.user.name.substring(0, 2)"></div>
+                                <span x-text="participant.user.name"></span>
+                            </td>
+                            <td class="p-sm md:p-md text-on-surface-variant" x-text="participant.user.email"></td>
+                            <td class="p-sm md:p-md"><span class="px-2 py-1 rounded bg-surface-container-highest text-on-surface-variant text-xs border border-outline-variant/30">Standard</span></td>
+                            <td class="p-sm md:p-md text-right">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium"
+                                      :class="participant.status === 'Attended' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'"
+                                      x-text="participant.status"></span>
+                            </td>
+                        </tr>
+                    </template>
+                    <template x-if="recentParticipants.length === 0">
+                        <tr><td colspan="4" class="text-center p-md text-on-surface-variant border-b border-outline-variant/20">No participants yet.</td></tr>
+                    </template>
                 </tbody>
             </table>
         </div>
@@ -139,72 +142,95 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('registrationChart');
-        if (!ctx) return;
-        
-        // CSS variables for chart colors
-        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || '#4F46E5';
-        const onSurfaceColor = getComputedStyle(document.documentElement).getPropertyValue('--color-on-surface-variant') || '#9CA3AF';
-        const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--color-outline-variant') || 'rgba(255,255,255,0.1)';
-        
-        // Create gradient
-        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.3)'); 
-        gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
-        
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {!! json_encode($registrationDates) !!},
-                datasets: [{
-                    label: 'Registrations',
-                    data: {!! json_encode($registrationCounts) !!},
-                    borderColor: primaryColor,
-                    backgroundColor: gradient,
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: primaryColor,
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(0,0,0,0.8)',
-                        padding: 12,
-                        titleFont: { size: 13, family: 'Inter' },
-                        bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) { return context.parsed.y + ' registrations'; }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false, drawBorder: false },
-                        ticks: { color: onSurfaceColor, font: { family: 'Inter', size: 11 } }
-                    },
-                    y: {
-                        grid: { color: gridColor, borderDash: [5, 5], drawBorder: false },
-                        ticks: { color: onSurfaceColor, font: { family: 'Inter', size: 11 }, precision: 0, beginAtZero: true }
-                    }
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index',
-                },
+function eventDetailState(eventId) {
+    return {
+        eventId: eventId,
+        event: null,
+        showEditEventModal: false,
+        canManageEvent: true, // Will set correctly based on role
+        canManageCertificates: true,
+        stats: { registered: 0, waitlisted: 0, attended: 0, conversionRate: 0 },
+        demographics: { attendedPct: 0, registeredPct: 0, otherPct: 0, topGroupPct: 0, topGroupName: 'None' },
+        registrationChart: { labels: [], data: [] },
+        recentParticipants: [],
+
+        async init() {
+            try {
+                const res = await window.apiFetch(`/api/events/${this.eventId}`);
+                if (res.ok) {
+                    const result = await res.json();
+                    this.event = result.data;
+                    this.stats = result.data.stats || this.stats;
+                    this.demographics = result.data.demographics || this.demographics;
+                    this.registrationChart = result.data.registrationChart || this.registrationChart;
+                    this.recentParticipants = result.data.recentParticipants || [];
+                    
+                    this.$nextTick(() => {
+                        this.renderChart();
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to load event details", error);
             }
-        });
-    });
+        },
+
+        renderChart() {
+            const ctx = document.getElementById('registrationChart');
+            if (!ctx) return;
+            
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--color-primary') || '#4F46E5';
+            const onSurfaceColor = getComputedStyle(document.documentElement).getPropertyValue('--color-on-surface-variant') || '#9CA3AF';
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--color-outline-variant') || 'rgba(255,255,255,0.1)';
+            
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(79, 70, 229, 0.3)'); 
+            gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: this.registrationChart.labels,
+                    datasets: [{
+                        label: 'Registrations',
+                        data: this.registrationChart.data,
+                        borderColor: primaryColor,
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: primaryColor,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            padding: 12,
+                            titleFont: { size: 13, family: 'Inter' },
+                            bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) { return context.parsed.y + ' registrations'; }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false, drawBorder: false }, ticks: { color: onSurfaceColor, font: { family: 'Inter', size: 11 } } },
+                        y: { grid: { color: gridColor, borderDash: [5, 5], drawBorder: false }, ticks: { color: onSurfaceColor, font: { family: 'Inter', size: 11 }, precision: 0, beginAtZero: true } }
+                    },
+                    interaction: { intersect: false, mode: 'index' }
+                }
+            });
+        }
+    };
+}
 </script>
 @endpush
 @endsection

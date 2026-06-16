@@ -3,7 +3,7 @@
 @section('title', 'Community Management')
 
 @section('content')
-<div x-data="{ showRoleModal: false, showGuidelinesModal: false, showCreateCommunityModal: false }" class="max-w-container-max mx-auto w-full flex flex-col gap-lg">
+<div x-data="communityPageState()" class="max-w-container-max mx-auto w-full flex flex-col gap-lg">
     
     <!-- Page Header -->
     <div class="mb-xl pb-sm border-b border-outline-variant/30 flex justify-between items-end">
@@ -23,11 +23,10 @@
             <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-md mb-sm">
                 <div>
                     <h2 class="font-headline-sm text-headline-sm text-on-surface mb-xs flex items-center gap-sm">
-                        {{ $community->name }}
+                        <span x-text="activeCommunity ? activeCommunity.name : 'Loading...'"></span>
                         <span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">verified</span>
                     </h2>
-                    <p class="font-body-sm text-body-sm text-on-surface-variant max-w-2xl">
-                        {{ $community->description }}
+                    <p class="font-body-sm text-body-sm text-on-surface-variant max-w-2xl" x-text="activeCommunity ? activeCommunity.description : ''">
                     </p>
                 </div>
                 <div class="flex gap-sm shrink-0">
@@ -38,15 +37,15 @@
             </div>
             <div class="flex gap-lg mt-md pt-md border-t border-outline-variant/20">
                 <div class="flex flex-col">
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">{{ number_format($community->members->count()) }}</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface" x-text="analytics.total_members || members.length || 0"></span>
                     <span class="font-label-caps text-label-caps text-outline">Total Members</span>
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface">{{ number_format((int)($community->members->count() * 0.4)) }}</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface" x-text="analytics.active_today || 0"></span>
                     <span class="font-label-caps text-label-caps text-outline">Active Today</span>
                 </div>
                 <div class="flex flex-col">
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary">+14%</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary" x-text="(analytics.growth > 0 ? '+' : '') + (analytics.growth || 0) + '%'"></span>
                     <span class="font-label-caps text-label-caps text-outline">Growth (30d)</span>
                 </div>
             </div>
@@ -73,33 +72,39 @@
             </div>
             <!-- Member List (Scrollable) -->
             <div class="flex-1 overflow-y-auto p-xs">
-                @forelse($community->members as $member)
-                <!-- Member Row -->
-                <div class="grid grid-cols-12 gap-sm px-md py-sm items-center hover:bg-white/[0.03] rounded-lg transition-colors group border-b border-outline-variant/10 last:border-0">
-                    <div class="col-span-6 md:col-span-5 flex items-center gap-md">
-                        <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-caps uppercase">{{ substr($member->user->name, 0, 2) }}</div>
-                        <div class="flex flex-col">
-                            <span class="font-body-sm text-body-sm text-on-surface">{{ $member->user->name }}</span>
-                            <span class="font-mono-code text-mono-code text-outline-variant text-[11px]">{{ '@' . strtolower(str_replace(' ', '_', $member->user->name)) }}</span>
+                <template x-for="member in members" :key="member.id">
+                    <!-- Member Row -->
+                    <div class="grid grid-cols-12 gap-sm px-md py-sm items-center hover:bg-white/[0.03] rounded-lg transition-colors group border-b border-outline-variant/10 last:border-0">
+                        <div class="col-span-6 md:col-span-5 flex items-center gap-md">
+                            <div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-on-surface-variant font-label-caps uppercase" x-text="member.user_detail?.name ? member.user_detail.name.substring(0, 2) : 'U'"></div>
+                            <div class="flex flex-col">
+                                <span class="font-body-sm text-body-sm text-on-surface" x-text="member.user_detail?.name || 'Unknown User'"></span>
+                                <span class="font-mono-code text-mono-code text-outline-variant text-[11px]" x-text="'@' + (member.user_detail?.name ? member.user_detail.name.toLowerCase().replace(/\s+/g, '_') : 'user')"></span>
+                            </div>
+                        </div>
+                        <div class="col-span-3 hidden md:block font-body-sm text-body-sm text-on-surface-variant" x-text="new Date(member.created_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})"></div>
+                        <div class="col-span-4 md:col-span-3 flex justify-center">
+                            <template x-if="member.role === 'Admin' || member.role === 'Owner'">
+                                <span class="bg-error-container/20 text-error border border-error/30 px-sm py-xs rounded font-label-caps text-[10px]" x-text="member.role"></span>
+                            </template>
+                            <template x-if="member.role === 'Moderator'">
+                                <span class="bg-tertiary-container/20 text-tertiary border border-tertiary/30 px-sm py-xs rounded font-label-caps text-[10px]" x-text="member.role"></span>
+                            </template>
+                            <template x-if="member.role !== 'Admin' && member.role !== 'Owner' && member.role !== 'Moderator'">
+                                <span class="bg-surface-variant text-on-surface-variant border border-outline-variant/50 px-sm py-xs rounded font-label-caps text-[10px]" x-text="member.role"></span>
+                            </template>
+                        </div>
+                        <div class="col-span-2 md:col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
                         </div>
                     </div>
-                    <div class="col-span-3 hidden md:block font-body-sm text-body-sm text-on-surface-variant">{{ $member->created_at->format('M d, Y') }}</div>
-                    <div class="col-span-4 md:col-span-3 flex justify-center">
-                        @if($member->role === 'Admin' || $member->role === 'Owner')
-                        <span class="bg-error-container/20 text-error border border-error/30 px-sm py-xs rounded font-label-caps text-[10px]">{{ $member->role }}</span>
-                        @elseif($member->role === 'Moderator')
-                        <span class="bg-tertiary-container/20 text-tertiary border border-tertiary/30 px-sm py-xs rounded font-label-caps text-[10px]">{{ $member->role }}</span>
-                        @else
-                        <span class="bg-surface-variant text-on-surface-variant border border-outline-variant/50 px-sm py-xs rounded font-label-caps text-[10px]">{{ $member->role }}</span>
-                        @endif
-                    </div>
-                    <div class="col-span-2 md:col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-sm">edit</span></button>
-                    </div>
-                </div>
-                @empty
-                <div class="p-md text-center text-on-surface-variant text-sm">No members found.</div>
-                @endforelse
+                </template>
+                <template x-if="members.length === 0 && !isLoading">
+                    <div class="p-md text-center text-on-surface-variant text-sm">No members found.</div>
+                </template>
+                <template x-if="isLoading">
+                    <div class="p-md text-center text-on-surface-variant text-sm">Loading members...</div>
+                </template>
             </div>
         </div>
 
@@ -173,7 +178,77 @@
 
     <!-- Modals -->
     <x-role-builder-modal />
-    <x-community-guidelines-modal :community="$community" />
     <x-create-community-modal />
 </div>
+
+@push('scripts')
+<script>
+function communityPageState() {
+    return {
+        showRoleModal: false,
+        showGuidelinesModal: false,
+        showCreateCommunityModal: false,
+        
+        activeCommunityId: localStorage.getItem('active_community_id') || null,
+        activeCommunity: null,
+        members: [],
+        analytics: {},
+        isLoading: true,
+        newCommunityForm: { name: '', description: '', password: '' },
+        createError: '',
+        
+        async init() {
+            if (!this.activeCommunityId) {
+                this.isLoading = false;
+                return; // Wait for Topbar to set it
+            }
+            
+            try {
+                // Fetch communities to find the active one's details
+                const commRes = await window.apiFetch('/api/communities');
+                if (commRes.ok) {
+                    const allComms = await commRes.json();
+                    this.activeCommunity = allComms.find(c => c.id == this.activeCommunityId);
+                }
+
+                // Fetch stitched members list
+                const membersRes = await window.apiFetch(`/api/communities/${this.activeCommunityId}/members`);
+                if (membersRes.ok) {
+                    this.members = await membersRes.json();
+                }
+
+                // Fetch analytics dashboard stats
+                const analyticsRes = await window.apiFetch(`/api/analytics/${this.activeCommunityId}/dashboard`);
+                if (analyticsRes.ok) {
+                    this.analytics = await analyticsRes.json();
+                }
+            } catch (err) {
+                console.error("Error loading community data:", err);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        async createCommunity() {
+            this.createError = '';
+            try {
+                const res = await window.apiFetch('/api/communities', 'POST', this.newCommunityForm);
+                if (res.ok) {
+                    const newComm = await res.json();
+                    // Set active and reload to see new community globally
+                    localStorage.setItem('active_community_id', newComm.community.id);
+                    window.location.reload();
+                } else {
+                    const errData = await res.json();
+                    this.createError = errData.message || 'Failed to create community.';
+                }
+            } catch (err) {
+                this.createError = 'A network error occurred.';
+            }
+        }
+    }
+}
+</script>
+@endpush
+
 @endsection

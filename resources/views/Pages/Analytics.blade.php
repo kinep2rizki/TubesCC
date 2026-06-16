@@ -8,7 +8,41 @@
     .chart-area { fill: url(#primary-gradient); opacity: 0.2; }
 </style>
 
-<div x-data="{ showExportModal: false }" class="max-w-container-max mx-auto w-full flex flex-col gap-xl">
+<div x-data="{ 
+    showExportModal: false,
+    isExporting: false,
+    async exportReport(e) {
+        this.isExporting = true;
+        try {
+            const formData = new FormData(e.target);
+            const format = formData.get('format') || 'csv';
+            const communityId = localStorage.getItem('active_community_id');
+            
+            const res = await window.apiFetch(`/api/analytics/${communityId}/export?format=${format}`, 'POST', {
+                include_metrics: true
+            });
+            
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'analytics_report.' + format;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                this.showExportModal = false;
+            } else {
+                alert('Gagal mendownload report');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Kesalahan jaringan saat mendownload');
+        } finally {
+            this.isExporting = false;
+        }
+    }
+}" class="max-w-container-max mx-auto w-full flex flex-col gap-xl">
     
     <!-- Page Header -->
     <div class="flex justify-between items-center pb-sm border-b border-outline-variant/30">
