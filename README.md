@@ -1,64 +1,75 @@
-# Tugas Besar CC - Project Service
+# PETA Frontend (Tubes CC)
 
-Repositori ini adalah layanan utama (**Project Service**) dari aplikasi PETA yang telah dimigrasi menjadi arsitektur Microservices.
-Layanan ini bertanggung jawab khusus untuk **Manajemen Komunitas, Event, Partisipasi, Attendance, dan Sertifikat**.
+Repositori ini adalah **Pure Frontend Layer** untuk aplikasi PETA, dibangun menggunakan Laravel Blade, Alpine.js, dan TailwindCSS.
+Layanan ini berjalan di Port `8000` (atau via Vite) dan bertugas murni sebagai *User Interface* (UI).
 
 > [!WARNING]
-> Layanan ini **tidak lagi memiliki fitur Autentikasi** secara internal. Fitur *Login*, *Register*, dan manajemen profil User telah dipindahkan sepenuhnya ke **Auth Service** (`TubesCC_BackendJWT`).
+> **TIDAK ADA DATABASE ATAU MODEL DI SINI!**
+> Sesuai arsitektur Microservices, repository ini tidak menyimpan data ke database secara langsung.
+> Seluruh `Model` dan `Migrations` telah dihapus.
 
-## 🚀 Walkthrough Instalasi & Konfigurasi
+## 🔗 Ketergantungan Layanan (Dependencies)
 
-1. **Clone & Install Dependencies**
-   ```bash
-   git clone https://github.com/kinep2rizki/TubesCC_ProjectService.git
-   cd TubesCC_ProjectService
-   composer install
-   ```
-
-2. **Setup Environment**
-   - Salin file `.env.example` ke `.env`.
-   - Pastikan konfigurasi Database menunjuk ke `peta`.
-   ```env
-   DB_CONNECTION=pgsql
-   DB_HOST=127.0.0.1
-   DB_PORT=5432
-   DB_DATABASE=peta
-   DB_USERNAME=postgres
-   DB_PASSWORD=kinep2004
-   ```
-
-3. **Jalankan Migrasi**
-   Pastikan Anda sudah membuat database `peta` di PostgreSQL, lalu jalankan:
-   ```bash
-   php artisan migrate
-   ```
-
-4. **Jalankan Layanan (Port 8000)**
-   Jalankan Project Service di Port 8000:
-   ```bash
-   php artisan serve
-   ```
+Untuk dapat menjalankan aplikasi ini secara penuh, Anda harus menjalankan 2 layanan Backend lainnya di background:
+1. **Auth Service (`TubesCC_BackendJWT`)** di Port `8001`. (Untuk Login & Register).
+2. **Project Service (`TubesCC_ProjectService`)** di Port `8002`. (Untuk mengambil data Komunitas, Event, dsb).
 
 ---
 
-## 🤖 AI Context: Catatan Penting untuk Pengembangan Selanjutnya
+## 🚧 Status & TODO (Penting untuk AI/Developer Selanjutnya)
 
-Bagi AI atau developer yang membaca file ini di masa mendatang, berikut adalah konteks penuh terkait pemisahan sistem ini menjadi Microservices:
+Karena pemisahan *Frontend* dari *Backend* baru saja dilakukan, **Sebagian besar halaman UI saat ini akan mengalami ERROR (Crash 500)**.
+Hal ini disebabkan karena *Controller* yang ada di repositori ini (seperti `CommunityController` atau `EventController`) masih menggunakan kode lama yang mencoba memanggil *Eloquent Model* (misal: `Community::all()`) yang sudah dihapus.
 
-### 📌 Perubahan yang Telah Terjadi
-1. **Pemisahan Auth**: Seluruh fitur login, register, token, dan autentikasi telah dipindahkan ke layanan `TubesCC_BackendJWT`.
-2. **Penghapusan Model User**: Model `User.php` dan tabel migrasi `users`, `personal_access_tokens`, serta manajemen peran dari `spatie/laravel-permission` telah **dihapus sepenuhnya** dari layanan ini.
+### Langkah Integrasi Berikutnya:
+1. **Refactor Controllers**:
+   Ubah semua *Controller* di frontend ini agar tidak lagi memanggil *Database/Model*. Gantilah dengan pemanggilan HTTP Request (Guzzle/Axios) ke API backend.
+   
+   *Contoh sebelum:*
+   ```php
+   public function index() {
+       $communities = Community::all();
+       return view('pages.community', compact('communities'));
+   }
+   ```
+   *Contoh sesudah:*
+   ```php
+   use Illuminate\Support\Facades\Http;
 
-### 🚧 Hal-Hal yang Belum Diimplementasikan (TODO)
-Karena hilangnya Model User, beberapa endpoint mungkin mengalami error (rusak) pada versi ini karena `$item->user` tidak lagi me-return *Relationship Object*. Tugas-tugas berikut ini harus diselesaikan di tahap pengembangan selanjutnya:
+   public function index() {
+       // Panggil API Project Service
+       $response = Http::get('http://127.0.0.1:8002/api/communities');
+       $communities = $response->json()['data'];
+       
+       return view('pages.community', compact('communities'));
+   }
+   ```
 
-1. **Validasi Token (Middleware)**: 
-   - Anda perlu membuat Custom Middleware (misal `CheckJwtToken`) yang menangkap header `Authorization: Bearer <token>` dari Frontend, dan melakukan verifikasi manual (baik via *Token Signature Verification* maupun memanggil introspeksi token ke Auth Service).
-2. **Sistem Sinkronisasi/Stitching Data**:
-   - Jika endpoint membutuhkan data spesifik milik pengguna (misal: Menampilkan daftar partisipan dengan namanya), maka *Project Service* hanya memiliki `user_id` saja.
-   - Hal ini bisa diselesaikan dengan *Data Stitching* via Frontend (Frontend memanggil Auth Service untuk resolusi ID ke nama), atau
-   - *Data Stitching* via Guzzle HTTP di dalam Controller Project Service (Project Service meminta data pengguna ke `http://127.0.0.1:8001/api/auth/users/batch`).
-3. **Pengecekan Role & Permission**:
-   - Saat ini *Spatie Role* ada di Auth Service. Untuk menentukan apakah pengguna (dengan ID `X`) adalah Admin di Komunitas `Y`, sistem harus mengandalkan mekanisme Cross-Service untuk memvalidasi Role.
-4. **Event Broadcasting (Reverb)**:
-   - Manajemen Realtime masih terpasang, namun *Private Channel* yang membutuhkan autentikasi pengguna (`Broadcast::routes()`) perlu disesuaikan agar bisa mengautentikasi klien berdasar JWT dari Auth Service.
+2. **Penyimpanan Token JWT (Session/Cookie)**:
+   Saat user login dengan memanggil Auth Service (Port 8001), token JWT yang dikembalikan harus disimpan di sesi (Session/Cookie) Frontend Laravel ini.
+
+3. **Injeksi Token ke setiap Request**:
+   Setiap kali Frontend melakukan `Http::get` ke Project Service (Port 8002) yang membutuhkan login, pastikan Anda melampirkan token JWT dari sesi tersebut:
+   `Http::withToken(session('jwt_token'))->get(...)`
+
+---
+
+## 💻 Cara Menjalankan Frontend
+
+```bash
+# 1. Clone repository
+git clone https://github.com/kinep2rizki/TubesCC.git
+cd TubesCC
+
+# 2. Install Dependency PHP & Node
+composer install
+npm install
+
+# 3. Setup Environment
+cp .env.example .env
+php artisan key:generate
+
+# 4. Jalankan Laravel & Vite
+php artisan serve --port=8000
+npm run dev
+```
