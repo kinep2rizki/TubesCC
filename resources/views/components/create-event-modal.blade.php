@@ -34,12 +34,18 @@
                     <!-- Community Select -->
                     <div class="space-y-1.5 md:col-span-2">
                         <label class="font-label-md text-label-md text-on-surface block mb-1">Community <span class="text-error">*</span></label>
-                        <select name="community_id" required class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
-                            <option value="">Select a community...</option>
-                            @foreach(\App\Models\Community::all() as $community)
-                                <option value="{{ $community->id }}">{{ $community->name }}</option>
+                        @php
+                            $activeCommunityId = session('active_community_id');
+                        @endphp
+                        <select disabled class="w-full bg-surface-container border border-outline-variant/50 text-on-surface-variant rounded-lg py-2.5 px-3 opacity-70 cursor-not-allowed">
+                            @foreach(session('user_communities', []) as $community)
+                                <option value="{{ $community['id'] ?? '' }}" {{ $activeCommunityId == ($community['id'] ?? '') ? 'selected' : '' }}>
+                                    {{ $community['name'] ?? '' }}
+                                </option>
                             @endforeach
                         </select>
+                        <!-- Hidden input to actually submit the value -->
+                        <input type="hidden" name="community_id" value="{{ $activeCommunityId }}">
                     </div>
 
                     <!-- Start Date Input -->

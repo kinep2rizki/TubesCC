@@ -20,8 +20,8 @@
                     <span class="font-display-lg-mobile text-display-lg-mobile text-on-surface font-bold" x-text="event ? event.capacity : 0"></span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
-                    <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Registered</span>
-                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary font-bold" x-text="stats.registered"></span>
+                    <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Participants</span>
+                    <span class="font-display-lg-mobile text-display-lg-mobile text-primary font-bold" x-text="stats.participants"></span>
                 </div>
                 <div class="flex flex-col gap-xs p-md bg-surface-container rounded-lg border border-outline-variant/20">
                     <span class="text-on-surface-variant text-body-sm font-body-sm font-medium">Waitlisted</span>
@@ -149,7 +149,7 @@ function eventDetailState(eventId) {
         showEditEventModal: false,
         canManageEvent: true, // Will set correctly based on role
         canManageCertificates: true,
-        stats: { registered: 0, waitlisted: 0, attended: 0, conversionRate: 0 },
+        stats: { participants: 0, registered: 0, waitlisted: 0, attended: 0, conversionRate: 0 },
         demographics: { attendedPct: 0, registeredPct: 0, otherPct: 0, topGroupPct: 0, topGroupName: 'None' },
         registrationChart: { labels: [], data: [] },
         recentParticipants: [],

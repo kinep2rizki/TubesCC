@@ -72,12 +72,26 @@
             return response;
         };
 
+        // Helper wrapper that automatically parses JSON response
+        // Used by Participants, Attendance, and Certificate pages
+        window.fetchApi = async function(endpoint, method = 'GET', bodyData = null) {
+            try {
+                const res = await window.apiFetch(endpoint, method, bodyData);
+                const data = await res.json();
+                return data;
+            } catch (error) {
+                console.error("fetchApi error:", error);
+                return { success: false, message: error.message };
+            }
+        };
+
         function globalAppState() {
             return {
                 sidebarOpen: false,
                 user: null,
                 isLoadingUser: true,
                 userCommunities: [],
+                userMemberships: [],
                 activeCommunityId: localStorage.getItem('active_community_id') || null,
                 
                 async init() {
@@ -112,11 +126,23 @@
                         try {
                             const commRes = await window.apiFetch('/api/communities', 'GET');
                             if (commRes.ok) {
-                                this.userCommunities = await commRes.json();
+                                const resData = await commRes.json();
+                                let arr = resData.data || resData;
+                                if (arr && Array.isArray(arr.data)) {
+                                    arr = arr.data;
+                                }
+                                this.userCommunities = arr;
                                 // If no active community is set but we have communities, set the first one
                                 if (!this.activeCommunityId && this.userCommunities.length > 0) {
                                     this.switchCommunity(this.userCommunities[0].id);
                                 }
+                            }
+                            
+                            // Fetch memberships for roles
+                            const memRes = await window.apiFetch('/api/communities/my-memberships', 'GET');
+                            if (memRes.ok) {
+                                const mData = await memRes.json();
+                                this.userMemberships = mData.data || [];
                             }
                         } catch (err) {
                             console.error('Failed to fetch communities', err);
@@ -127,7 +153,11 @@
                 switchCommunity(id) {
                     this.activeCommunityId = id;
                     localStorage.setItem('active_community_id', id);
-                    window.location.reload();
+                    window.dispatchEvent(new CustomEvent('community-changed', { detail: { id: id } }));
+                    
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.set('community_id', id);
+                    window.location.search = urlParams.toString();
                 },
                 
                 async doLogout() {

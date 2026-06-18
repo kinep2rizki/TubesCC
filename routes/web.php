@@ -14,15 +14,14 @@ use App\Http\Controllers\ProfileController;
 // 1. AUTHENTICATION ROUTES (Public)
 // ==========================================
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
-Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/sync-session', [AuthController::class, 'syncSession']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // ==========================================
 // 2. PROTECTED ROUTES (Butuh Login)
 // ==========================================
 // Middleware aktif
-Route::group(['middleware' => ['auth']], function () {
+Route::group(['middleware' => [\App\Http\Middleware\JwtAuthMiddleware::class]], function () {
     
     // Dashboard (Overview Acara)
     Route::get('/', [EventController::class, 'index'])->name('dashboard');

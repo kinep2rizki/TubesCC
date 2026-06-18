@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 return; // Let Laravel handle JSON API errors natively
             }
 
+            if ($e instanceof \Illuminate\Auth\AuthenticationException) {
+                return; // Let Laravel handle unauthenticated redirect to login
+            }
+
             $statusCode = 500;
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
                 $statusCode = $e->getStatusCode();

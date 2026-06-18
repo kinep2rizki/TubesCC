@@ -19,44 +19,54 @@ class EventController extends Controller
 
     public function show($id)
     {
-        return view('Pages.EventDetail', compact('id'));
+        $token = session('jwt_token') ?? '';
+        $response = \Illuminate\Support\Facades\Http::withToken($token)
+            ->get("http://127.0.0.1:8002/api/events/{$id}");
+            
+        if ($response->status() === 401) {
+            return redirect('/login')->with('error', 'Session expired. Please login again.');
+        }
+
+        if (!$response->successful()) {
+            abort(404, 'Event not found. (Status: ' . $response->status() . ')');
+        }
+        
+        $data = $response->json()['data'] ?? [];
+        $event = json_decode(json_encode($data));
+        
+        return view('Pages.EventDetail', compact('id', 'event'));
     }
 
     public function store(\Illuminate\Http\Request $request)
     {
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'community_id' => 'required|exists:communities,id',
+            'community_id' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'location' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
-        if (!auth()->user()->canManageEvent($validated['community_id'])) {
-            abort(403, 'Unauthorized to create events for this community.');
+        $token = session('jwt_token') ?? '';
+        $response = \Illuminate\Support\Facades\Http::withToken($token)
+            ->post('http://127.0.0.1:8002/api/events', $validated);
+
+        if ($response->status() === 401) {
+            return redirect('/login')->with('error', 'Session expired. Please login again.');
         }
 
-        $event = Event::create($validated);
-
-        \App\Models\ActivityLog::create([
-            'user_id' => auth()->id(),
-            'community_id' => $validated['community_id'],
-            'action' => 'created_event',
-            'description' => "created a new event '{$event->title}'",
-            'ip_address' => request()->ip(),
-        ]);
+        if (!$response->successful()) {
+            $errorMsg = $response->json('message') ?? 'Unknown error';
+            $detailedError = $response->json('error') ?? '';
+            abort($response->status(), "Gagal membuat event: {$errorMsg}. Detail: {$detailedError}");
+        }
 
         return back()->with('success', 'Event created successfully.');
     }
 
     public function update(Request $request, $id)
     {
-        $event = Event::findOrFail($id);
-        if (!auth()->user()->canManageEvent($event->community_id)) {
-            abort(403, 'Unauthorized to edit this event.');
-        }
-
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'start_date' => 'required|date',
@@ -65,7 +75,17 @@ class EventController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $event->update($validated);
+        $token = session('jwt_token') ?? '';
+        $response = \Illuminate\Support\Facades\Http::withToken($token)
+            ->put("http://127.0.0.1:8002/api/events/{$id}", $validated);
+
+        if ($response->status() === 401) {
+            return redirect('/login')->with('error', 'Session expired. Please login again.');
+        }
+
+        if (!$response->successful()) {
+            abort($response->status(), 'Gagal mengupdate event: ' . ($response->json('message') ?? 'Unknown error'));
+        }
 
         return back()->with('success', 'Event updated successfully.');
     }

@@ -4,6 +4,8 @@
 
 @section('content')
 <div x-data="{ 
+        event: @js($event),
+        eventId: {{ $event->id }},
         template: 'modern',
         isGenerating: false,
         showModal: false,
@@ -111,12 +113,17 @@
         </div>
         
         <div class="flex items-center gap-sm w-full md:w-auto">
-            @hasanyrole('Super Admin|Community Manager')
+            @php
+                $userRoles = session('user_roles', []);
+                $activeRole = session('active_community_role');
+                $canGenerate = in_array('Super Admin', $userRoles) || in_array($activeRole, ['Owner', 'Admin']);
+            @endphp
+            @if($canGenerate)
             <button @click="showModal = true" class="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-caps text-label-caps hover:bg-primary/90 transition-colors shadow-[0_0_15px_rgba(77,142,255,0.3)]">
                 <span class="material-symbols-outlined text-[18px]">settings</span> 
                 <span>Generate Settings</span>
             </button>
-            @endhasanyrole
+            @endif
         </div>
     </div>
 

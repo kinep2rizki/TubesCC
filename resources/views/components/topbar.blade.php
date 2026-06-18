@@ -66,12 +66,12 @@
                 <div class="h-px w-full bg-outline-variant/30 my-2"></div>
                 
                 <!-- Create New Community Action -->
-                <button class="w-full flex items-center gap-md px-md py-sm hover:bg-white/5 text-on-surface transition-colors group text-left">
+                <a href="{{ route('communities') }}" class="w-full flex items-center gap-md px-md py-sm hover:bg-white/5 text-on-surface transition-colors group text-left">
                     <div class="w-8 h-8 rounded border border-dashed border-outline-variant group-hover:border-primary flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors flex-shrink-0">
                         <span class="material-symbols-outlined text-[18px]">add</span>
                     </div>
                     <span class="font-body-sm text-body-sm font-semibold group-hover:text-primary transition-colors">Create New Community</span>
-                </button>
+                </a>
             </div>
         </div>
         <div class="flex items-center gap-xs border-l border-outline-variant/30 pl-sm">
@@ -110,8 +110,29 @@
                     <div class="px-md py-sm border-b border-outline-variant/30 mb-1">
                         <p class="font-body-sm text-body-sm text-on-surface font-semibold leading-tight" x-text="user ? user.name : 'Loading...'"></p>
                         <p class="text-[10px] text-on-surface-variant font-mono-code leading-tight mt-1" x-text="user ? user.email : '...'"></p>
-                        <div class="mt-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary border-primary/30">
-                            User
+                        @php
+                            $rawRoles = session('user_roles', []);
+                            $displayRoles = [];
+                            foreach ($rawRoles as $r) {
+                                $displayRoles[] = is_array($r) ? ($r['name'] ?? 'User') : $r;
+                            }
+                            $communityRole = session('active_community_role');
+                            if ($communityRole) {
+                                $displayRoles[] = "Community " . $communityRole;
+                            }
+                        @endphp
+                        <div class="mt-2 flex flex-col gap-1 items-start">
+                            @php
+                                $globalRoles = array_filter($displayRoles, fn($r) => !str_starts_with($r, 'Community '));
+                            @endphp
+                            <div class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-surface-variant/50 text-on-surface-variant border-surface-variant">
+                                Global: {{ count($globalRoles) > 0 ? implode(', ', $globalRoles) : 'User' }}
+                            </div>
+                            <template x-if="userMemberships && userMemberships.find(m => m.community_id == activeCommunityId)">
+                                <div class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary border-primary/30"
+                                     x-text="'Local: ' + userMemberships.find(m => m.community_id == activeCommunityId).role">
+                                </div>
+                            </template>
                         </div>
                     </div>
                     <a href="#" class="flex items-center gap-3 px-md py-sm hover:bg-white/5 transition-colors text-on-surface">

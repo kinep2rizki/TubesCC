@@ -23,8 +23,7 @@
             $inactiveClass = 'text-on-surface-variant hover:text-on-surface px-md py-sm hover:bg-white/5 transition-all duration-200 active:translate-x-1 rounded-lg';
             
             $activeCommunityId = session('active_community_id');
-            $latestEvent = \App\Models\Event::where('community_id', $activeCommunityId)->latest('start_date')->first();
-            $defaultEventId = $latestEvent ? $latestEvent->id : 1;
+            $defaultEventId = 1;
         @endphp
 
         <!-- Dashboard Tab -->
@@ -39,27 +38,29 @@
             <span class="font-label-caps text-label-caps">Events</span>
         </a>
 
-        @role('Super Admin')
+        @php
+            $canManageUsers = false;
+            $rawRoles = session('user_roles', []);
+            $userRoles = [];
+            foreach ($rawRoles as $r) {
+                $userRoles[] = is_array($r) ? ($r['name'] ?? '') : $r;
+            }
+            $activeCommunityRole = session('active_community_role');
+            
+            if (in_array('Super Admin', $userRoles)) {
+                $canManageUsers = true;
+            } elseif ($activeCommunityRole && in_array($activeCommunityRole, ['Admin', 'Owner'])) {
+                $canManageUsers = true;
+            }
+        @endphp
+
+        @if(in_array('Super Admin', $userRoles))
         <a class="flex items-center gap-md {{ request()->routeIs('communities') ? $activeClass : $inactiveClass }}" href="{{ route('communities') }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('communities') ? '1' : '0' }};">hub</span>
             <span class="font-label-caps text-label-caps">Communities</span>
         </a>
-        @endrole
+        @endif
         
-        @php
-            $canManageUsers = false;
-            if (auth()->user()) {
-                if (auth()->user()->hasRole('Super Admin')) {
-                    $canManageUsers = true;
-                } elseif ($activeCommunityId) {
-                    $canManageUsers = \App\Models\CommunityMember::where('user_id', auth()->id())
-                        ->where('community_id', $activeCommunityId)
-                        ->whereIn('role', ['Admin', 'Owner'])
-                        ->exists();
-                }
-            }
-        @endphp
-
         @if($canManageUsers)
         <a class="flex items-center gap-md {{ request()->routeIs('users') ? $activeClass : $inactiveClass }}" href="{{ route('users') }}">
             <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' {{ request()->routeIs('users') ? '1' : '0' }};">group</span>
@@ -69,9 +70,11 @@
 
         @php
             $isSuperOrOwner = false;
-            if (auth()->check()) {
-                $activeCommunityId = session('active_community_id');
-                $isSuperOrOwner = auth()->user()->hasRole('Super Admin') || ($activeCommunityId && auth()->user()->hasCommunityRole($activeCommunityId, 'Owner'));
+            $userRoles = session('user_roles', []);
+            $activeCommunityRole = session('active_community_role');
+            
+            if (in_array('Super Admin', $userRoles) || $activeCommunityRole === 'Owner') {
+                $isSuperOrOwner = true;
             }
         @endphp
 

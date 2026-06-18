@@ -126,12 +126,13 @@
             <form @submit.prevent="submitAddParticipant">
                 <div class="flex flex-col gap-md mb-lg">
                     <div>
-                        <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Full Name</label>
-                        <input type="text" x-model="addForm.name" required class="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                    </div>
-                    <div>
-                        <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Email Address</label>
-                        <input type="email" x-model="addForm.email" required class="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                        <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Select Member</label>
+                        <select x-model="addForm.user_id" required class="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                            <option value="">-- Choose Community Member --</option>
+                            <template x-for="member in communityMembers" :key="member.user_id">
+                                <option :value="member.user_id" x-text="member.user_detail ? member.user_detail.name + ' (' + member.user_detail.email + ')' : 'User ID ' + member.user_id"></option>
+                            </template>
+                        </select>
                     </div>
                     <div>
                         <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Status</label>
@@ -163,6 +164,8 @@ document.addEventListener('alpine:init', () => {
         isLoading: true,
         isSubmitting: false,
         canManage: false,
+        canManageEvent: false,
+        canManageCertificates: false,
         selectAll: false,
         selected: [],
         showAddModal: false,
@@ -179,9 +182,9 @@ document.addEventListener('alpine:init', () => {
             search: '',
             status: ''
         },
+        communityMembers: [],
         addForm: {
-            name: '',
-            email: '',
+            user_id: '',
             status: 'Registered'
         },
 
@@ -195,18 +198,17 @@ document.addEventListener('alpine:init', () => {
         },
 
         async checkPermissions() {
-            // Kita bisa mengecek peran user saat ini jika punya state global (atau optimis true jika error ditangkap)
             try {
                 const eventRes = await fetchApi('/api/events/' + this.eventId);
                 if (eventRes.success) {
-                    const authRes = await fetch('http://127.0.0.1:8001/api/auth/me', {
-                        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwt_token') }
-                    });
-                    const user = await authRes.json();
-                    
-                    // Simple check if user is admin globally or locally 
-                    // This is handled better in actual JWT tokens, but let's assume true for Owner/Moderator
+                    const communityId = eventRes.data.community_id;
+                    const membersRes = await fetchApi(`/api/communities/${communityId}/members`);
+                    if (membersRes.success) {
+                        this.communityMembers = membersRes.data;
+                    }
                     this.canManage = true; // Placeholder, in real life check roles
+                    this.canManageEvent = true;
+                    this.canManageCertificates = true;
                 }
             } catch (e) { console.error(e); }
         },
@@ -267,7 +269,7 @@ document.addEventListener('alpine:init', () => {
                 const res = await fetchApi('/api/events/' + this.eventId + '/participants', 'POST', this.addForm);
                 if (res.success) {
                     this.showAddModal = false;
-                    this.addForm = { name: '', email: '', status: 'Registered' };
+                    this.addForm = { user_id: '', status: 'Registered' };
                     this.fetchData(); // reload table
                 } else {
                     alert('Error: ' + (res.message || 'Failed to add participant'));
@@ -279,8 +281,33 @@ document.addEventListener('alpine:init', () => {
             }
         },
         
-        exportCSV() {
-            window.location.href = `http://127.0.0.1:8002/api/events/${this.eventId}/participants/export?token=` + localStorage.getItem('jwt_token');
+        async exportCSV() {
+            try {
+                const url = `http://127.0.0.1:8002/api/events/${this.eventId}/participants/export`;
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('jwt_token')
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = `participants_event_${this.eventId}.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                    alert('Berhasil mengexport data partisipan!');
+                } else {
+                    alert('Gagal mengekspor data partisipan.');
+                }
+            } catch (e) {
+                console.error("Export failed", e);
+                alert('Kesalahan jaringan saat mengekspor data.');
+            }
         },
         
         async updateStatus(participantId, newStatus) {

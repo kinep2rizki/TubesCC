@@ -11,6 +11,24 @@
 <div x-data="{ 
     showExportModal: false,
     isExporting: false,
+    activeCommId: localStorage.getItem('active_community_id'),
+    init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlCommId = urlParams.get('community_id');
+        
+        if (!urlCommId && this.activeCommId && this.activeCommId !== 'all') {
+            urlParams.set('community_id', this.activeCommId);
+            window.location.search = urlParams.toString();
+        } else if (urlCommId && urlCommId !== this.activeCommId && urlCommId !== 'all') {
+            localStorage.setItem('active_community_id', urlCommId);
+            this.activeCommId = urlCommId;
+        }
+
+        window.addEventListener('community-changed', (e) => {
+            urlParams.set('community_id', e.detail.id);
+            window.location.search = urlParams.toString();
+        });
+    },
     async exportReport(e) {
         this.isExporting = true;
         try {

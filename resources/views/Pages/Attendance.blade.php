@@ -177,9 +177,14 @@
             <form @submit.prevent="submitManualCheckin">
                 <div class="flex flex-col gap-md mb-lg">
                     <div>
-                        <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Email Address</label>
-                        <input type="email" x-model="checkinEmail" required placeholder="example@email.com" class="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all">
-                        <p class="font-body-sm text-body-sm text-outline-variant mt-xs">Enter the participant's registered email to check them in manually.</p>
+                        <label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Select Member</label>
+                        <select x-model="checkinUserId" required class="w-full bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                            <option value="">-- Choose Member --</option>
+                            <template x-for="participant in eventParticipants" :key="participant.user_id">
+                                <option :value="participant.user_id" x-text="participant.user_detail ? participant.user_detail.name + ' (' + participant.user_detail.email + ')' : 'User ID ' + participant.user_id"></option>
+                            </template>
+                        </select>
+                        <p class="font-body-sm text-body-sm text-outline-variant mt-xs">Select a registered participant to check them in manually.</p>
                     </div>
                 </div>
                 
@@ -206,9 +211,12 @@ document.addEventListener('alpine:init', () => {
             expectedCount: 0
         },
         showManualCheckinModal: false,
-        checkinEmail: '',
+        checkinUserId: '',
+        eventParticipants: [],
         isSubmitting: false,
         canManage: false,
+        canManageEvent: false,
+        canManageCertificates: false,
         feedbackMessage: '',
         feedbackType: '', // 'success' or 'error'
         
@@ -237,7 +245,13 @@ document.addEventListener('alpine:init', () => {
             try {
                 const eventRes = await fetchApi('/api/events/' + this.eventId);
                 if (eventRes.success) {
+                    const participantsRes = await fetchApi(`/api/events/${this.eventId}/participants?all=1`);
+                    if (participantsRes.success) {
+                        this.eventParticipants = participantsRes.data;
+                    }
                     this.canManage = true; 
+                    this.canManageEvent = true;
+                    this.canManageCertificates = true;
                 }
             } catch (e) { console.error(e); }
         },
@@ -347,12 +361,12 @@ document.addEventListener('alpine:init', () => {
             this.isSubmitting = true;
             this.feedbackMessage = '';
             try {
-                const res = await fetchApi('/api/events/' + this.eventId + '/attendance/check-in', 'POST', { email: this.checkinEmail });
+                const res = await fetchApi('/api/events/' + this.eventId + '/attendance/check-in', 'POST', { user_id: this.checkinUserId });
                 if (res.success) {
                     this.feedbackMessage = 'Checked in successfully!';
                     this.feedbackType = 'success';
                     this.showManualCheckinModal = false;
-                    this.checkinEmail = '';
+                    this.checkinUserId = '';
                     this.fetchInitialData(); // reload
                 } else {
                     this.feedbackMessage = res.message || 'Error checkin';

@@ -30,21 +30,21 @@
                     <!-- Title Input -->
                     <div class="space-y-1.5 md:col-span-2">
                         <label class="font-label-md text-label-md text-on-surface block mb-1">Event Title <span class="text-error">*</span></label>
-                        <input type="text" name="title" required value="{{ $event->title }}" 
+                        <input type="text" name="title" required :value="event ? event.title : '{{ $event->title }}'" 
                                class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
                     </div>
 
                     <!-- Start Date Input -->
                     <div class="space-y-1.5">
                         <label class="font-label-md text-label-md text-on-surface block mb-1">Start Date & Time <span class="text-error">*</span></label>
-                        <input type="datetime-local" name="start_date" required value="{{ \Carbon\Carbon::parse($event->start_date)->format('Y-m-d\TH:i') }}" 
+                        <input type="datetime-local" name="start_date" required :value="event ? event.start_date.replace(' ', 'T').substring(0, 16) : '{{ \Carbon\Carbon::parse($event->start_date)->format('Y-m-d\TH:i') }}'" 
                                class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
                     </div>
 
                     <!-- End Date Input -->
                     <div class="space-y-1.5">
                         <label class="font-label-md text-label-md text-on-surface block mb-1">End Date & Time <span class="text-error">*</span></label>
-                        <input type="datetime-local" name="end_date" required value="{{ \Carbon\Carbon::parse($event->end_date)->format('Y-m-d\TH:i') }}" 
+                        <input type="datetime-local" name="end_date" required :value="event ? event.end_date.replace(' ', 'T').substring(0, 16) : '{{ \Carbon\Carbon::parse($event->end_date)->format('Y-m-d\TH:i') }}'" 
                                class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
                     </div>
                 </div>
@@ -52,15 +52,15 @@
                 <!-- Location Input -->
                 <div class="space-y-1.5">
                     <label class="font-label-md text-label-md text-on-surface block mb-1">Location</label>
-                    <input type="text" name="location" value="{{ $event->location }}" 
+                    <input type="text" name="location" :value="event ? event.location : '{{ $event->location }}'" 
                            class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
                 </div>
 
                 <!-- Description Input -->
                 <div class="space-y-1.5">
                     <label class="font-label-md text-label-md text-on-surface block mb-1">Description</label>
-                    <textarea name="description" rows="3" 
-                              class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">{{ $event->description }}</textarea>
+                    <textarea name="description" rows="3" :value="event ? event.description : '{{ $event->description }}'"
+                              class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"></textarea>
                 </div>
             </div>
 

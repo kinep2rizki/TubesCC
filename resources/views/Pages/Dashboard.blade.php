@@ -199,7 +199,7 @@
 </div>
 
 <template x-if="activeCommunity">
-    <x-community-guidelines-modal :community="null" />
+    <x-community-guidelines-modal :community="$activeCommunity" />
 </template>
 </div>
 
@@ -241,7 +241,11 @@ function dashboardState() {
             // Fetch active community info
             const commRes = await window.apiFetch('/api/communities');
             if (commRes.ok) {
-                const allComms = await commRes.json();
+                const resData = await commRes.json();
+                let allComms = resData.data || resData;
+                if (allComms && Array.isArray(allComms.data)) {
+                    allComms = allComms.data;
+                }
                 this.activeCommunity = allComms.find(c => c.id == this.activeCommunityId);
                 
                 // TODO: Set canEditGuidelines properly if needed

@@ -1,9 +1,11 @@
 @props(['event', 'activeTab' => 'overview'])
 
 @php
-    $user = auth()->user();
-    $canManageEvent = $user && $event->community ? $user->canManageEvent($event->community_id) : false;
-    $canManageCertificates = $user && $event->community ? $user->canManageCertificates($event->community_id) : false;
+    $user = session('user');
+    $userRoles = session('user_roles', []);
+    $activeCommunityRole = session('active_community_role');
+    $canManageEvent = in_array('Super Admin', $userRoles) || in_array($activeCommunityRole, ['Admin', 'Owner']);
+    $canManageCertificates = $canManageEvent;
 @endphp
 
 <!-- Back Button -->
@@ -40,12 +42,12 @@
             Share
         </button>
         
-        <template x-if="canManageEvent">
+        @if($canManageEvent)
             <button @click="showEditEventModal = true" class="flex-1 md:flex-none flex items-center justify-center gap-xs px-md py-sm rounded-lg bg-primary text-on-primary font-label-caps text-label-caps hover:bg-primary/90 transition-colors">
                 <span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
                 Edit Event
             </button>
-        </template>
+        @endif
     </div>
 </div>
 
@@ -57,7 +59,7 @@
     
     <a :href="'/events/' + eventId + '/attendance'" class="px-md py-sm font-body-base text-body-base {{ $activeTab === 'attendance' ? 'text-primary font-semibold border-b-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/20 transition-colors' }} whitespace-nowrap">Attendance</a>
     
-    <template x-if="canManageCertificates">
+    @if($canManageCertificates)
         <a :href="'/events/' + eventId + '/certificates'" class="px-md py-sm font-body-base text-body-base {{ $activeTab === 'certificates' ? 'text-primary font-semibold border-b-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/20 transition-colors' }} whitespace-nowrap">Certificates</a>
-    </template>
+    @endif
 </div>

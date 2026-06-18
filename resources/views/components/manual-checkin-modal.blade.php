@@ -28,10 +28,11 @@
                 </p>
 
                 @php
-                    $currentUser = auth()->user();
-                    $isSuperAdmin = $currentUser ? $currentUser->hasRole('Super Admin') : false;
-                    $communityMember = $currentUser && isset($event) && $event->community ? $event->community->members()->where('user_id', $currentUser->id)->first() : null;
-                    $isAdmin = $isSuperAdmin || ($communityMember && in_array($communityMember->role, ['Owner', 'Admin']));
+                    $currentUser = session('user');
+                    $userRoles = session('user_roles', []);
+                    $activeCommunityRole = session('active_community_role');
+                    $isSuperAdmin = in_array('Super Admin', $userRoles);
+                    $isAdmin = $isSuperAdmin || in_array($activeCommunityRole, ['Owner', 'Admin']);
                 @endphp
 
                 <!-- Email Input -->

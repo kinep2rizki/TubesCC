@@ -2,58 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Certificate;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class CertificateController extends Controller
 {
     public function index($eventId)
     {
-        $event = \App\Models\Event::findOrFail($eventId);
+        $token = session('jwt_token') ?? '';
         
-        $activeCommunityId = session('active_community_id');
-        if ($event->community_id != $activeCommunityId) {
-            return redirect()->route('events')->with('error', 'The event belongs to a different community.');
+        // 1. Get Event Detail
+        $resEvent = Http::withToken($token)->get("http://127.0.0.1:8002/api/events/{$eventId}");
+        
+        if ($resEvent->status() === 401) {
+            return redirect('/login')->with('error', 'Session expired. Please login again.');
         }
 
-        if (!auth()->user()->hasCommunityRole($activeCommunityId, ['Owner', 'Admin'])) {
-            return abort(403, 'You do not have permission to manage certificates for this community.');
+        if (!$resEvent->successful()) {
+            abort(404, 'Event not found.');
         }
+        
+        $eventData = $resEvent->json()['data'] ?? [];
+        $event = json_decode(json_encode($eventData));
 
-        $allEvents = \App\Models\Event::where('community_id', $activeCommunityId)->get();
-        $participants = \App\Models\EventParticipant::with('user')
-            ->where('event_id', $eventId)
-            ->where('status', 'Attended')
-            ->get();
+        // 2. Get All Events
+        $resEvents = Http::withToken($token)->get("http://127.0.0.1:8002/api/events", ['per_page' => 100]);
+        $allEventsData = $resEvents->json()['data']['data'] ?? [];
+        $allEvents = json_decode(json_encode($allEventsData));
+
+        // 3. Get Participants (Attended)
+        $resParticipants = Http::withToken($token)->get("http://127.0.0.1:8002/api/events/{$eventId}/participants", [
+            'status' => 'Attended',
+            'per_page' => 1000
+        ]);
+        $participantsData = $resParticipants->json()['data']['data'] ?? [];
+        
+        $participants = array_map(function($p) {
+            $obj = new \stdClass();
+            $obj->id = $p['id'];
+            $obj->user = new \stdClass();
+            $obj->user->name = $p['user_detail']['name'] ?? 'Unknown';
+            $obj->user->email = $p['user_detail']['email'] ?? 'Unknown';
+            return $obj;
+        }, $participantsData);
             
         return view('Pages.Certificate', compact('event', 'allEvents', 'participants'));
-    }
-
-    public function generate(Request $request, $eventId)
-    {
-        $validated = $request->validate([
-            'template' => 'required|string',
-        ]);
-
-        $event = \App\Models\Event::findOrFail($eventId);
-        
-        $activeCommunityId = session('active_community_id');
-        if ($event->community_id != $activeCommunityId) {
-            return redirect()->route('events')->with('error', 'The event belongs to a different community.');
-        }
-
-        if (!auth()->user()->hasCommunityRole($activeCommunityId, ['Owner', 'Admin'])) {
-            return abort(403, 'You do not have permission to generate certificates for this community.');
-        }
-        
-        // Dispatch the job to run in the background
-        \App\Jobs\GenerateCertificatesJob::dispatch($eventId, $validated['template']);
-
-        return back()->with('success', 'Certificate generation has started in the background. Participants will receive a notification when it is ready.');
-    }
-
-    public function download($certificateId)
-    {
-        // Logic to download a specific certificate PDF
-        return response()->download('path/to/certificate.pdf');
     }
 }

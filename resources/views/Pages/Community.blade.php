@@ -207,20 +207,28 @@ function communityPageState() {
                 // Fetch communities to find the active one's details
                 const commRes = await window.apiFetch('/api/communities');
                 if (commRes.ok) {
-                    const allComms = await commRes.json();
+                    const resData = await commRes.json();
+                    let allComms = resData.data || resData;
+                    if (allComms && Array.isArray(allComms.data)) {
+                        allComms = allComms.data;
+                    }
                     this.activeCommunity = allComms.find(c => c.id == this.activeCommunityId);
                 }
 
                 // Fetch stitched members list
                 const membersRes = await window.apiFetch(`/api/communities/${this.activeCommunityId}/members`);
                 if (membersRes.ok) {
-                    this.members = await membersRes.json();
+                    const mData = await membersRes.json();
+                    let mArr = mData.data || mData;
+                    if (mArr && Array.isArray(mArr.data)) mArr = mArr.data;
+                    this.members = Array.isArray(mArr) ? mArr : [];
                 }
 
                 // Fetch analytics dashboard stats
                 const analyticsRes = await window.apiFetch(`/api/analytics/${this.activeCommunityId}/dashboard`);
                 if (analyticsRes.ok) {
-                    this.analytics = await analyticsRes.json();
+                    const aData = await analyticsRes.json();
+                    this.analytics = aData.data || aData;
                 }
             } catch (err) {
                 console.error("Error loading community data:", err);

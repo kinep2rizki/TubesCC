@@ -35,22 +35,51 @@
         </div>
         
         <!-- Community Selector Form -->
-        <form id="communityForm" method="GET" action="{{ route('users') }}" class="flex items-center gap-sm">
+        <form id="communityForm" method="GET" action="{{ route('users') }}" class="flex items-center gap-sm" 
+            x-data="{
+                activeCommId: localStorage.getItem('active_community_id') || '{{ $communities->first()->id ?? 'all' }}',
+                init() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlCommId = urlParams.get('community_id');
+                    
+                    // Allow 'all' for superadmins
+                    if (!urlCommId && this.activeCommId) {
+                        urlParams.set('community_id', this.activeCommId);
+                        window.location.search = urlParams.toString();
+                    } else if (urlCommId && urlCommId !== this.activeCommId && urlCommId !== 'all') {
+                        // If url has community_id but it differs from local storage, sync local storage to URL (or vice versa).
+                        // Since topbar drives local storage, let's sync URL to local storage.
+                        urlParams.set('community_id', this.activeCommId);
+                        window.location.search = urlParams.toString();
+                    }
+
+                    window.addEventListener('community-changed', (e) => {
+                        urlParams.set('community_id', e.detail.id);
+                        window.location.search = urlParams.toString();
+                    });
+                }
+            }">
             @if(request('search'))
                 <input type="hidden" name="search" value="{{ request('search') }}">
             @endif
             <label for="community_id" class="font-label-caps text-label-caps text-on-surface-variant shrink-0">Community Context:</label>
             @if($isSuperAdmin)
-                <select name="community_id" id="community_id" onchange="document.getElementById('communityForm').submit()" class="bg-surface-container-low border border-outline-variant/50 text-on-surface font-body-sm text-body-sm rounded-lg px-md py-sm focus:ring-1 focus:ring-primary focus:outline-none min-w-[200px]">
-                    <option value="all" {{ $communityId === 'all' ? 'selected' : '' }}>All Communities (Overview)</option>
+                <select name="community_id" id="community_id" onchange="localStorage.setItem('active_community_id', this.value); document.getElementById('communityForm').submit()" class="bg-surface-container-low border border-outline-variant/50 text-on-surface font-body-sm text-body-sm rounded-lg px-md py-sm focus:ring-1 focus:ring-primary focus:outline-none min-w-[200px]">
+                    <option value="all" {{ request('community_id') === 'all' ? 'selected' : '' }}>All Communities (Overview)</option>
                     @foreach($communities as $comm)
-                    <option value="{{ $comm->id }}" {{ (string)$communityId === (string)$comm->id ? 'selected' : '' }}>{{ $comm->name }}</option>
+                    <option value="{{ $comm->id }}" {{ (string)request('community_id') === (string)$comm->id ? 'selected' : '' }}>{{ $comm->name }}</option>
                     @endforeach
                 </select>
             @else
-                <input type="hidden" name="community_id" value="{{ $communityId }}">
+                <input type="hidden" name="community_id" :value="activeCommId">
                 <div class="bg-surface-container-low border border-outline-variant/50 text-on-surface font-body-sm text-body-sm rounded-lg px-md py-sm min-w-[200px] cursor-not-allowed opacity-80" title="Switch your active community from the top menu to change this context">
-                    {{ $communities->first()->name ?? 'Unknown Community' }}
+                    <span x-text="document.querySelector(`[data-comm-id='${activeCommId}']`)?.innerText || '{{ $communities->first()->name ?? 'Unknown Community' }}'"></span>
+                    <!-- Fallback invisible elements to grab name -->
+                    <div class="hidden">
+                        @foreach($communities as $comm)
+                            <span data-comm-id="{{ $comm->id }}">{{ $comm->name }}</span>
+                        @endforeach
+                    </div>
                 </div>
             @endif
         </form>
@@ -137,7 +166,7 @@
                                     <span class="text-outline-variant text-[11px] font-label-caps">No Communities</span>
                                 @endforelse
                                 
-                                @if($u->hasRole('Super Admin'))
+                                @if(collect($u->roles ?? [])->contains('name', 'Super Admin'))
                                 <div class="flex items-center gap-1 bg-error/20 border border-error/30 px-2 py-1 rounded text-[11px] font-label-caps">
                                     <span class="text-error font-bold">System</span>
                                     <span class="text-error/70">•</span>
@@ -153,7 +182,7 @@
                             @if($isSuperAdmin || $isOwner)
                                 @php
                                     $currentRole = 'User';
-                                    if ($u->hasRole('Super Admin')) $currentRole = 'Super Admin';
+                                    if (collect($u->roles ?? [])->contains('name', 'Super Admin')) $currentRole = 'Super Admin';
                                 @endphp
                                 <button @click="openEditModal({{ $u->id }}, '{{ addslashes($u->name) }}', '{{ $currentRole }}', {{ json_encode($u->communityMemberships->pluck('role', 'community_id')) }})" class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-variant/50 opacity-0 group-hover:opacity-100 focus:opacity-100">
                                     <span class="material-symbols-outlined text-[20px]">edit</span>

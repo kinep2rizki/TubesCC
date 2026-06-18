@@ -23,7 +23,7 @@
             </button>
         </div>
 
-        <form action="{{ route('communities.update', $community->id) }}" method="POST" class="flex flex-col flex-1 overflow-hidden">
+        <form action="#" method="POST" class="flex flex-col flex-1 overflow-hidden">
             @csrf
             @method('PUT')
             
@@ -38,7 +38,7 @@
                     
                     <div class="space-y-1.5 mt-2">
                         <label class="font-label-md text-label-md text-on-surface block mb-1">Community Name <span class="text-error">*</span></label>
-                        <input type="text" name="name" required value="{{ $community->name }}" 
+                        <input type="text" name="name" required value="{{ $community['name'] ?? '' }}" 
                                class="w-full bg-surface-container border border-outline-variant/50 text-on-surface rounded-lg py-2.5 px-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
                     </div>
                 </div>
@@ -60,7 +60,7 @@
                             <div class="w-px h-6 bg-outline-variant/30 mx-1 my-auto"></div>
                             <button type="button" class="p-1 rounded hover:bg-white/10 text-on-surface-variant transition-colors"><span class="material-symbols-outlined text-[18px]">link</span></button>
                         </div>
-                        <textarea name="description" class="w-full h-40 bg-transparent p-md text-on-surface focus:outline-none text-body-base resize-y" placeholder="1. Be respectful and welcoming...&#10;2. No spam or self-promotion...">{{ $community->description }}</textarea>
+                        <textarea name="description" class="w-full h-40 bg-transparent p-md text-on-surface focus:outline-none text-body-base resize-y" placeholder="1. Be respectful and welcoming...&#10;2. No spam or self-promotion...">{{ $community['description'] ?? '' }}</textarea>
                     </div>
                 </div>
 

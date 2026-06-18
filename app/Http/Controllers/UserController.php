@@ -17,12 +17,32 @@ class UserController extends Controller
         $communityId = $request->input('community_id', 'all');
         $search = $request->input('search', '');
 
-        // 1. Fetch Users from Auth Service
+        // 1. If filtering by community, get its members first
+        $filterUserIds = null;
+        if ($communityId !== 'all') {
+            $projResponse = Http::withToken($token)
+                ->get("http://127.0.0.1:8002/api/communities/{$communityId}/members");
+            if ($projResponse->successful()) {
+                $membersData = $projResponse->json()['data'] ?? [];
+                $filterUserIds = array_column($membersData, 'user_id');
+                // If the community has no members, we shouldn't fetch any users
+                if (empty($filterUserIds)) {
+                    $filterUserIds = [0]; // Dummy ID so it returns empty paginator
+                }
+            }
+        }
+
+        // 2. Fetch Users from Auth Service (with user_ids filter if applicable)
+        $authParams = [
+            'search' => $search,
+            'page' => $request->input('page', 1)
+        ];
+        if ($filterUserIds !== null) {
+            $authParams['user_ids'] = $filterUserIds;
+        }
+
         $authResponse = Http::withToken($token)
-            ->get('http://127.0.0.1:8001/api/auth/users', [
-                'search' => $search,
-                'page' => $request->input('page', 1)
-            ]);
+            ->get('http://127.0.0.1:8001/api/auth/users', $authParams);
 
         if (!$authResponse->successful()) {
             return redirect()->back()->with('error', 'Failed to fetch users from Auth Service.');
@@ -32,7 +52,7 @@ class UserController extends Controller
         $usersArray = $authData['data']['data'] ?? [];
         $userIds = array_column($usersArray, 'id');
 
-        // 2. Fetch Memberships from Project Service
+        // 3. Fetch Memberships from Project Service for the users on this page
         $membershipsData = [];
         if (!empty($userIds)) {
             $projResponse = Http::withToken($token)
@@ -48,7 +68,7 @@ class UserController extends Controller
         // Group memberships by user_id
         $membershipsByUser = [];
         foreach ($membershipsData as $m) {
-            $membershipsByUser[$m['user_id']][] = (object) $m;
+            $membershipsByUser[$m['user_id']][] = json_decode(json_encode($m));
         }
 
         // Convert user arrays to objects so Blade template ($u->name) works smoothly

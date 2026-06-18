@@ -238,7 +238,23 @@
 
                         if (response.ok) {
                             localStorage.setItem('jwt_token', data.access_token);
-                            window.location.href = '/dashboard';
+                            
+                            // Sync session with Laravel frontend
+                            const syncRes = await fetch('/sync-session', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({ token: data.access_token })
+                            });
+
+                            if (syncRes.ok) {
+                                window.location.href = '/';
+                            } else {
+                                this.errorMessage = 'Failed to establish local session.';
+                            }
                         } else {
                             this.errorMessage = data.error || data.message || 'Login failed. Please check your credentials.';
                         }
