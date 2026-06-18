@@ -171,6 +171,7 @@
         }
     </script>
 
+    <x-live-chat />
     @stack('scripts')
 </body>
 </html>
